@@ -1,21 +1,21 @@
 /* Cifre e Suoni service worker: keeps the app usable offline. */
-const CACHE = 'cifresuoni-2026-10-10-1';
+const CACHE = 'cifresuoni-2026-10-10-flat';
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png",
-  "./fonts/bricolage-grotesque-latin-700-normal.woff2",
-  "./fonts/bricolage-grotesque-latin-800-normal.woff2",
-  "./fonts/instrument-sans-latin-400-normal.woff2",
-  "./fonts/instrument-sans-latin-500-normal.woff2",
-  "./fonts/instrument-sans-latin-600-normal.woff2",
-  "./fonts/instrument-sans-latin-700-normal.woff2",
-  "./fonts/spline-sans-mono-latin-400-normal.woff2",
-  "./fonts/spline-sans-mono-latin-500-normal.woff2",
-  "./fonts/spline-sans-mono-latin-600-normal.woff2"
+  "./icon-192.png",
+  "./icon-512.png",
+  "./apple-touch-icon.png",
+  "./bricolage-grotesque-latin-700-normal.woff2",
+  "./bricolage-grotesque-latin-800-normal.woff2",
+  "./instrument-sans-latin-400-normal.woff2",
+  "./instrument-sans-latin-500-normal.woff2",
+  "./instrument-sans-latin-600-normal.woff2",
+  "./instrument-sans-latin-700-normal.woff2",
+  "./spline-sans-mono-latin-400-normal.woff2",
+  "./spline-sans-mono-latin-500-normal.woff2",
+  "./spline-sans-mono-latin-600-normal.woff2"
 ];
 
 self.addEventListener('install', (event) => {
