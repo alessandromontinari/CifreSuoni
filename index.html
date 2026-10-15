@@ -293,6 +293,11 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .check { display: flex; align-items: flex-start; gap: 9px; font-size: .88rem; cursor: pointer; }
 .check input { width: 17px; height: 17px; accent-color: var(--blu); margin: 1px 0 0; flex: none; }
 .check.dis { opacity: .45; cursor: default; }
+.bk-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.bk-msg { font-size: .84rem; margin-top: 8px; display: flex; flex-direction: column; align-items: flex-start; }
+.bk-msg:empty { display: none; }
+.bk-imp { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; align-items: flex-start; }
+.bk-imp textarea { width: 100%; min-height: 70px; border: 1.5px solid var(--line-strong); border-radius: 9px; background: var(--surface-2); color: var(--ink); font-family: var(--f-mono); font-size: .75rem; padding: 8px; }
 .reset { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 .reset span { font-size: .84rem; }
 .store-note { font-size: .78rem; color: var(--muted); margin: 0; }
@@ -453,6 +458,11 @@ details.set[open] summary::after { transform: rotate(-135deg); }
           </div>
         </details>
       </div>
+
+      <section class="panel" aria-label="Cambio telefono">
+        <h2>Cambio telefono</h2>
+        <div id="backupBox"></div>
+      </section>
 
       <p class="store-note" id="storeNote"></p>
     </aside>
@@ -1537,6 +1547,132 @@ function resetBox(el, sec) {
 }
 resetBox(els.aReset, 'a');
 resetBox(els.pReset, 'p');
+
+/* ---------- backup: move progress to another phone ---------- */
+function setupBackup(cfg) {
+  var box = cfg.el, text = '', parsed = null;
+  function p2(n) { return (n < 10 ? '0' : '') + n; }
+  function stamp(ms) { try { return new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(ms)); } catch (e) { return new Date(ms).toLocaleString(); } }
+  function fileName() { var d = new Date(); return cfg.app + '-progressi-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.txt'; }
+  box.innerHTML =
+    '<p class="note">' + cfg.intro + '</p>' +
+    '<div class="bk-row"><button type="button" class="btn small primary" data-bk="export">Esporta progressi</button><button type="button" class="btn small ghost" data-bk="import">Importa progressi</button></div>' +
+    '<div class="bk-msg" role="status"></div>' +
+    '<div class="bk-imp" hidden>' +
+      '<button type="button" class="btn small ghost" data-bk="file">Scegli il file</button>' +
+      '<label class="note" for="' + cfg.app + '-bk-text">oppure incolla qui il testo esportato</label>' +
+      '<textarea id="' + cfg.app + '-bk-text" rows="3" spellcheck="false"></textarea>' +
+      '<button type="button" class="btn small primary" data-bk="paste">Importa il testo</button>' +
+    '</div>' +
+    '<input type="file" accept=".txt,.json,text/plain,application/json" hidden>';
+  var msg = box.querySelector('.bk-msg'), imp = box.querySelector('.bk-imp'), area = box.querySelector('textarea'), file = box.querySelector('input[type=file]');
+  function say(html) { msg.innerHTML = html; }
+  function copyLink() { return ' <button type="button" class="link" data-bk="copy">Copia il testo</button>'; }
+  function download(name) {
+    try {
+      var url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+      var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      say('Ho scaricato <b>' + name + '</b> nella cartella Download. Mandalo al telefono nuovo, oppure:' + copyLink());
+    } catch (e) { say('Non riesco a creare il file qui.' + copyLink()); }
+  }
+  function doExport() {
+    text = JSON.stringify(cfg.build());
+    var name = fileName();
+    if (window.claude && typeof window.claude.use === 'function') {
+      say('Preparo il file…');
+      window.claude.use('downloads').then(function (dl) {
+        if (!dl) { say('Da qui non posso salvare file:' + copyLink()); return; }
+        return dl.save({ filename: name, data: text }).then(function () { say('File <b>' + name + '</b> pronto. In alternativa:' + copyLink()); },
+          function (e) { say((e && e.code === 'declined' ? 'Salvataggio annullato.' : 'Il file non è stato salvato.') + copyLink()); });
+      });
+      return;
+    }
+    try {
+      var f = new File([text], name, { type: 'text/plain' });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        navigator.share({ files: [f], title: 'Progressi ' + cfg.title }).then(function () {
+          say('File <b>' + name + '</b> condiviso. Aprilo con “Importa progressi” sul telefono nuovo.' + copyLink());
+        }, function (e) { if (e && e.name === 'AbortError') say('Condivisione annullata.' + copyLink()); else download(name); });
+        return;
+      }
+    } catch (e) {}
+    download(name);
+  }
+  function doCopy() {
+    function fallback() { imp.hidden = false; area.value = text; area.focus(); area.select(); say('Il testo è selezionato qui sotto: copialo e mandatelo.'); }
+    try { navigator.clipboard.writeText(text).then(function () { say('Testo copiato. Incollalo in un messaggio a te stesso, poi sul telefono nuovo incollalo in “Importa progressi”.'); }, fallback); }
+    catch (e) { fallback(); }
+  }
+  function handle(raw) {
+    var obj = null;
+    try { obj = JSON.parse(String(raw || '').trim()); } catch (e) {}
+    if (!obj || typeof obj !== 'object') { say('Non riconosco questo testo: deve essere il file creato con “Esporta progressi”.'); return; }
+    if (obj.app !== cfg.app) { say('Questo file è di un’altra app' + (obj.app ? ' (' + String(obj.app).replace(/[<>&]/g, '') + ')' : '') + ': importalo lì.'); return; }
+    parsed = obj;
+    say('<span>File del ' + stamp(obj.at || Date.now()) + ': ' + cfg.describe(obj) + '. Lo unisco ai progressi di questo telefono?</span>' +
+      '<span class="bk-row" style="margin-top:8px"><button type="button" class="btn small primary" data-bk="yes">Unisci</button><button type="button" class="btn small ghost" data-bk="no">Annulla</button></span>');
+  }
+  box.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-bk]'); if (!b) return;
+    var k = b.getAttribute('data-bk');
+    if (k === 'export') doExport();
+    else if (k === 'copy') doCopy();
+    else if (k === 'import') { imp.hidden = !imp.hidden; say(''); }
+    else if (k === 'file') file.click();
+    else if (k === 'paste') { if (area.value.trim()) handle(area.value); else say('Incolla prima il testo esportato.'); }
+    else if (k === 'yes' && parsed) { try { cfg.apply(parsed); say('Fatto: progressi importati.'); imp.hidden = true; area.value = ''; } catch (e) { say('Qualcosa è andato storto durante l’importazione.'); } parsed = null; }
+    else if (k === 'no') { parsed = null; say(''); }
+  });
+  file.addEventListener('change', function () {
+    var f = file.files && file.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { handle(r.result); file.value = ''; };
+    r.onerror = function () { say('Non riesco a leggere il file.'); };
+    r.readAsText(f);
+  });
+}
+
+function mergeImport(obj) {
+  ['a', 'p'].forEach(function (sec) {
+    var src = obj[sec] && obj[sec].c ? obj[sec].c : {};
+    Object.keys(src).forEach(function (k) {
+      var arr = src[k]; if (!Array.isArray(arr) || arr.length < 10) return;
+      var o = unpackState(arr), mine = STATE[sec].get(k);
+      if (!mine || o.r > mine.r || (o.r === mine.r && (o.d - o.i) > (mine.d - mine.i))) STATE[sec].set(k, o);
+    });
+  });
+  if (obj.p) {
+    var w = obj.p.w || {};
+    Object.keys(w).forEach(function (n) { if (!data.p.w[n] && typeof w[n] === 'string') data.p.w[n] = w[n].slice(0, 30); });
+    data.p.pmax = Math.max(data.p.pmax || 1, +obj.p.pmax || 1);
+  }
+  if (obj.m) {
+    data.m.s = mergeSettings(obj.m.s); settings = data.m.s;
+    var st = obj.m.st || {}, days = st.days || {}, kinds = st.kinds || {};
+    Object.keys(days).forEach(function (d) {
+      var mine = data.m.st.days[d] || (data.m.st.days[d] = {});
+      ['a', 'p'].forEach(function (sec) { var x = days[d] && days[d][sec]; if (Array.isArray(x) && (!mine[sec] || x[0] > mine[sec][0])) mine[sec] = x.slice(0, 3); });
+    });
+    Object.keys(kinds).forEach(function (k) { var x = kinds[k]; if (Array.isArray(x) && (!data.m.st.kinds[k] || x[0] > data.m.st.kinds[k][0])) data.m.st.kinds[k] = x.slice(0, 3); });
+  }
+  Store.mark('a'); Store.mark('p'); Store.mark('m');
+  clearTimeout(Store.timer); Store.timer = null; Store.flush();
+  cur = { a: null, p: null }; RECENT = { a: [], p: [] };
+  syncSettingsUI(); nextQuestion(); renderAll();
+}
+setupBackup({
+  app: 'cifresuoni', title: 'Cifre e Suoni', el: document.getElementById('backupBox'),
+  intro: 'Per passare a un altro telefono: esporta qui, mandati il file e importalo nell’app sul telefono nuovo. Il file contiene entrambe le sezioni.',
+  build: function () { return { app: 'cifresuoni', v: 1, at: Date.now(), a: bodyOf('a'), p: bodyOf('p'), m: bodyOf('m') }; },
+  describe: function (o) {
+    var na = o.a && o.a.c ? Object.keys(o.a.c).length : 0, np = o.p && o.p.c ? Object.keys(o.p.c).length : 0, ans = 0;
+    var kinds = o.m && o.m.st && o.m.st.kinds ? o.m.st.kinds : {};
+    Object.keys(kinds).forEach(function (k) { ans += +kinds[k][0] || 0; });
+    return ans + ' risposte, ' + na + ' esercizi di aritmetica e ' + np + ' di fonetica già visti';
+  },
+  apply: mergeImport
+});
 
 /* ---------- boot ---------- */
 Store.loadLocal();
