@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Cifre e Suoni</title>
-<meta name="description" content="Tabelline, inverse e conversione fonetica con ripasso dilazionato">
+<meta name="description" content="Tabelline, inverse, potenze di 2 e conversione fonetica con ripasso dilazionato">
 <meta name="theme-color" content="#F6F8FC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -121,6 +121,8 @@ button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-v
 .question .word { letter-spacing: .01em; }
 .question .digits { font-family: var(--f-mono); font-weight: 600; letter-spacing: .06em; }
 .question .small { font-size: .55em; color: var(--muted); font-weight: 700; }
+.question sup { font-size: .5em; line-height: 0; vertical-align: .9em; color: var(--blu); font-weight: 700; margin-left: .04em; }
+.question .big { font-family: var(--f-mono); font-weight: 600; font-size: .7em; letter-spacing: 0; white-space: nowrap; }
 .prompt { margin: 0 0 12px; color: var(--muted); font-size: .95rem; }
 .prompt b { color: var(--ink); }
 form.ansf { display: flex; gap: 8px; }
@@ -242,6 +244,10 @@ tr.tot td { font-weight: 600; border-bottom: 0; }
 .ic small { font-size: .58rem; opacity: .8; white-space: nowrap; }
 .ic.off { opacity: .25; }
 .ic.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+.pgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.pgrid .ic { padding: 7px 2px; }
+.pgrid .ic b sup { font-size: .72em; line-height: 0; }
+.pgrid .ic small { font-size: .64rem; }
 .detail { font-size: .84rem; margin: 10px 0 0; min-height: 1.3em; }
 .detail b { font-family: var(--f-mono); font-weight: 600; }
 
@@ -318,7 +324,7 @@ details.set[open] summary::after { transform: rotate(-135deg); }
   <header class="top">
     <div class="brand">
       <h1>Cifre <span>e</span> Suoni</h1>
-      <p>Tabelline, inverse e conversione fonetica, con ripasso dilazionato</p>
+      <p>Tabelline, inverse, potenze di 2 e conversione fonetica, con ripasso dilazionato</p>
     </div>
     <nav class="tabs" role="tablist" aria-label="Sezioni">
       <button type="button" role="tab" id="tab-a" aria-selected="true">Aritmetica</button>
@@ -387,6 +393,9 @@ details.set[open] summary::after { transform: rotate(-135deg); }
           <h3>Inverse 1/x</h3>
           <div class="mapwrap"><div class="igrid" id="iGrid"></div></div>
           <p class="detail" id="iDetail">Tocca un numero per vedere il valore e il trucco per ricordarlo.</p>
+          <h3>Potenze di 2</h3>
+          <div class="mapwrap"><div class="igrid pgrid" id="wGrid"></div></div>
+          <p class="detail" id="wDetail">Tocca una potenza per vedere il valore e come ricordarla.</p>
         </section>
 
         <details class="panel set" id="setA">
@@ -399,10 +408,15 @@ details.set[open] summary::after { transform: rotate(-135deg); }
             <label class="check" for="aMul"><input type="checkbox" id="aMul"> Moltiplicazioni, in tutti e due gli ordini (2 × 13, 13 × 2)</label>
             <label class="check" for="aDiv"><input type="checkbox" id="aDiv"> Divisioni (26 ÷ 13, 26 ÷ 2)</label>
             <label class="check" for="aInv"><input type="checkbox" id="aInv"> Inverse: 1/15 = ? %</label>
-            <label class="check" for="aInvr"><input type="checkbox" id="aInvr"> Inverse al contrario: 1/6.<span class="ov">6</span>% = ?</label>
+            <label class="check" for="aInvr"><input type="checkbox" id="aInvr"> <span>Inverse al contrario: 1/6.<span class="ov">6</span>% = ?</span></label>
+            <label class="check" for="aPow"><input type="checkbox" id="aPow"> <span>Potenze di 2: 2<sup>5</sup> = ?</span></label>
+            <label class="check" for="aPowr"><input type="checkbox" id="aPowr"> <span>Potenze di 2 al contrario: 32 = 2<sup>?</sup></span></label>
             <p class="set-h">Inverse: valori di x</p>
             <div class="nchips" id="aInvs"></div>
             <div class="quick" id="aInvsQuick"><button type="button" data-q="all">Tutti</button><button type="button" data-q="none">Nessuno</button><button type="button" data-q="low">1–20</button><button type="button" data-q="high">21–40</button></div>
+            <p class="set-h">Potenze di 2: esponenti</p>
+            <div class="nchips" id="aPows"></div>
+            <div class="quick" id="aPowsQuick"><button type="button" data-q="all">Tutti</button><button type="button" data-q="none">Nessuno</button><button type="button" data-q="low">2–10</button><button type="button" data-q="high">11–20</button></div>
             <div class="set-row"><span>Velocità richiesta</span>
               <div class="seg" id="aSpeed"><button type="button" data-v="1.6">Calma</button><button type="button" data-v="1">Normale</button><button type="button" data-v="0.7">Rapida</button></div>
             </div>
@@ -559,6 +573,42 @@ var INV_HINT = {
   39: '1/39 = 1/13 ÷ 3: 7.69 / 3 = <b>2.56%</b>.',
   40: 'Metà di 1/20: <b>2.5%</b>.'
 };
+
+/* ================= powers of two ================= */
+function grp(n) { return n < 10000 ? String(n) : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F'); }
+function p2h(n) { return '2<sup>' + n + '</sup>'; }
+var POW_NOTE = {
+  2: '2 × 2 = <b>4</b>.',
+  3: '2 × 2 × 2 = <b>8</b>.',
+  4: '4 × 4 = <b>16</b>.',
+  5: '<b>32</b>: il doppio di 16.',
+  6: '<b>64</b>: le caselle della scacchiera, 8 × 8.',
+  7: '<b>128</b>: il doppio di 64.',
+  8: '<b>256</b> = 16 × 16: i valori di un byte, da 0 a 255.',
+  9: '<b>512</b>: la metà di 1024.',
+  10: '<b>1024</b> ≈ mille: è il “kilo” dell’informatica (1 KB = 1024 byte).',
+  12: '<b>4096</b> = 64 × 64.',
+  14: '<b>16 384</b> = 128 × 128.',
+  15: '<b>32 768</b>: la metà di 2<sup>16</sup> = 65 536.',
+  16: '<b>65 536</b> = 256 × 256: i valori di 16 bit.',
+  18: '<b>262 144</b> = 512 × 512.',
+  19: '<b>524 288</b>: la metà di 2<sup>20</sup> = 1 048 576.',
+  20: '<b>1 048 576</b> = 1024 × 1024 ≈ un milione (1 MB).'
+};
+function powHints(n) {
+  var v = Math.pow(2, n), out = [], k;
+  if (POW_NOTE[n]) out.push(POW_NOTE[n]);
+  if (n >= 11 && n <= 19) { k = Math.pow(2, n - 10); out.push(p2h(n) + ' = ' + k + ' × 1024 = ' + grp(k * 1000) + ' + ' + grp(k * 24) + ' = <b>' + grp(v) + '</b> (' + k + ' × 24 = ' + grp(k * 24) + ').'); }
+  if (n >= 3) out.push('Il doppio di ' + p2h(n - 1) + ' = ' + grp(v / 2) + ': ' + grp(v / 2) + ' × 2 = <b>' + grp(v) + '</b>.');
+  return out.slice(0, 2);
+}
+function powRevHints(n) {
+  var v = Math.pow(2, n), k = Math.pow(2, n - 10), first;
+  if (n === 20) first = 'Circa un milione = 1024 × 1024 = ' + p2h(10) + ' × ' + p2h(10) + ' = <b>' + p2h(20) + '</b>.';
+  else if (n >= 11) first = grp(v) + ' ≈ ' + k + ' mila = ' + k + ' × 1024 = ' + p2h(n - 10) + ' × ' + p2h(10) + ' = <b>' + p2h(n) + '</b>.';
+  else { var seq = []; for (var e = 1; e <= n; e++) seq.push(Math.pow(2, e)); first = 'Raddoppia da 2 contando i passi: ' + seq.join(', ') + ' → <b>' + p2h(n) + '</b>.'; }
+  return [first].concat(POW_NOTE[n] ? [POW_NOTE[n]] : []);
+}
 
 /* ================= multiplication hints ================= */
 function mulHints(a, b) {
@@ -738,10 +788,10 @@ var LEVELS = [
 function levelOfKey(k) { var t = k.slice(0, k.indexOf(':')); return { p1: 1, p2: 2, p2m: 2, p3: 3, p4: 4, p5: 5, p6: 6 }[t]; }
 
 /* ================= cards ================= */
-var KIND_LABEL = { mul: 'Moltiplicazioni', div: 'Divisioni', inv: 'Inverse 1/x', invr: 'Inverse al contrario',
+var KIND_LABEL = { mul: 'Moltiplicazioni', div: 'Divisioni', inv: 'Inverse 1/x', invr: 'Inverse al contrario', pow: 'Potenze di 2', powr: 'Potenze al contrario',
   p1: 'Consonanti → cifra', p2: 'Sillabe → cifre', p2m: 'Cifra → suoni', p3: 'Parola → numero', p4: 'Numero → parola', p5: 'Parola lunga → numero', p6: 'Numero lungo → parole' };
-var KIND_ORDER = { a: ['mul', 'div', 'inv', 'invr'], p: ['p1', 'p2', 'p2m', 'p3', 'p4', 'p5', 'p6'] };
-var BASE_FAST = { mul: 2500, div: 3000, inv: 3500, invr: 3000, p1: 2000, p2: 2500, p2m: 3000 };
+var KIND_ORDER = { a: ['mul', 'div', 'inv', 'invr', 'pow', 'powr'], p: ['p1', 'p2', 'p2m', 'p3', 'p4', 'p5', 'p6'] };
+var BASE_FAST = { mul: 2500, div: 3000, inv: 3500, invr: 3000, pow: 2500, powr: 2500, p1: 2000, p2: 2500, p2m: 3000 };
 
 function checkExact(raw, ans) { var v = parseNum(raw); if (isNaN(v)) return null; return { ok: Math.abs(v - ans) < 1e-9, shown: trimZ(String(v)) }; }
 function checkInv(raw, x) {
@@ -752,6 +802,16 @@ function checkInv(raw, x) {
 function checkInvR(raw, x) {
   var v = parseNum(raw); if (isNaN(v)) return null;
   return { ok: [v, v * 100].some(function (c) { return Math.abs(c - x) <= 0.25; }), shown: trimZ(String(v)) };
+}
+function checkPow(raw, ans) {
+  var s = String(raw == null ? '' : raw).trim().replace(/[\s  .,'’]/g, '');
+  if (!/^\d+$/.test(s)) return null;
+  return { ok: +s === ans, shown: grp(+s) };
+}
+function checkPowR(raw, n) {
+  var v = parseNum(String(raw == null ? '' : raw).trim().replace(/^2\s*\^\s*/, ''));
+  if (isNaN(v)) return null;
+  return { ok: v === n, shown: trimZ(String(v)) };
 }
 function checkDigits(raw, ans) {
   var s = String(raw || '').replace(/[\s.\-·]/g, '');
@@ -780,6 +840,16 @@ function makeArithCard(key) {
     c = { kind: 'invr', fact: 'inv' + a, tag: 'Inverse · al contrario', qHTML: '1<span class="op">/</span>' + sh.html + '<span class="small">%</span>', prompt: 'Di quale numero è l’inverso? Rispondi con un numero intero.', mode: 'num', unit: '',
       answerHTML: String(a), plain: '1/' + sh.text + '% = ' + a, hints: ['1/' + a + ' = ' + sh.html + '%, quindi 1/' + sh.html + '% = <b>' + a + '</b>.', INV_HINT[a]] };
     c.check = function (raw) { return checkInvR(raw, a); };
+  } else if (t === 'w') {
+    var pv = Math.pow(2, a);
+    c = { kind: 'pow', fact: 'pow' + a, tag: 'Potenze di 2', qHTML: '2<sup>' + a + '</sup>', prompt: 'Quanto fa?', mode: 'num', unit: '',
+      answerHTML: grp(pv), plain: '2^' + a + ' = ' + grp(pv), len: String(pv).length, hints: powHints(a) };
+    c.check = function (raw) { return checkPow(raw, pv); };
+  } else if (t === 'l') {
+    var lv = Math.pow(2, a);
+    c = { kind: 'powr', fact: 'pow' + a, tag: 'Potenze · al contrario', qHTML: '<span class="big">' + grp(lv) + '</span><span class="op">=</span>2<sup>?</sup>', prompt: 'Che potenza di 2 è? Scrivi l’esponente.', mode: 'num', unit: '',
+      answerHTML: '2<sup>' + a + '</sup>', plain: grp(lv) + ' = 2^' + a, hints: powRevHints(a) };
+    c.check = function (raw) { return checkPowR(raw, a); };
   }
   c.key = key; c.sec = 'a';
   return c;
@@ -841,6 +911,7 @@ function fuzz(x) { return x * (0.92 + Math.random() * 0.16); }
 function gradeOf(card, ok, ms, mult) {
   if (!ok) return 0;
   var f = BASE_FAST[card.kind];
+  if (card.kind === 'pow') f = 1500 + 350 * card.len;
   if (card.kind === 'p3' || card.kind === 'p5') f = 1800 + 700 * card.len;
   if (card.kind === 'p4' || card.kind === 'p6') f = 4000 + 2500 * card.len;
   f *= mult || 1;
@@ -931,7 +1002,7 @@ function selectNext(keys, states, recent, cap, factOf, newPick) {
   return pick(pool.length ? pool : keys);
 }
 
-globalThis.__CS = { invExp: invExp, invShort: invShort, mulHints: mulHints, phonEncode: phonEncode, checkInv: checkInv, checkInvR: checkInvR,
+globalThis.__CS = { invExp: invExp, invShort: invShort, mulHints: mulHints, powHints: powHints, powRevHints: powRevHints, checkPow: checkPow, checkPowR: checkPowR, grp: grp, phonEncode: phonEncode, checkInv: checkInv, checkInvR: checkInvR,
   schedule: schedule, gradeOf: gradeOf, selectNext: selectNext, makeArithCard: makeArithCard, makePhonCard: makePhonCard, WORDS: WORDS, WCODE: WCODE,
   LEVELS: LEVELS, L2: L2, RULES: RULES, INV_HINT: INV_HINT, levelOf: levelOf, packState: packState, unpackState: unpackState };
 if (!isBrowser) return;
@@ -940,10 +1011,11 @@ if (!isBrowser) return;
 var coarse = false;
 try { coarse = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
 function defaultSettings() {
-  var nums = {}, invs = {};
+  var nums = {}, invs = {}, pows = {};
   for (var n = 1; n <= 20; n++) nums[n] = n >= 2;
   for (var x = 1; x <= 40; x++) invs[x] = x >= 2;
-  return { a: { nums: nums, invs: invs, mul: true, div: true, inv: true, invr: true, speed: 1 }, p: { unlock: false, sc0: false, off: {}, speed: 1 }, auto: true, pad: coarse };
+  for (var e = 2; e <= 20; e++) pows[e] = true;
+  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, speed: 1 }, p: { unlock: false, sc0: false, off: {}, speed: 1 }, auto: true, pad: coarse };
 }
 var data = { v: 1, a: { u: 0, c: {} }, p: { u: 0, c: {}, w: {}, pmax: 1 }, m: { u: 0, s: defaultSettings(), st: { days: {}, kinds: {} } } };
 var STATE = { a: new Map(), p: new Map() };
@@ -955,7 +1027,8 @@ function mergeSettings(s) {
   if (s.a) {
     for (var n = 1; n <= 20; n++) if (s.a.nums && typeof s.a.nums[n] === 'boolean') d.a.nums[n] = s.a.nums[n];
     for (var x = 1; x <= 40; x++) if (s.a.invs && typeof s.a.invs[x] === 'boolean') d.a.invs[x] = s.a.invs[x];
-    ['mul', 'div', 'inv', 'invr'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
+    for (var e = 2; e <= 20; e++) if (s.a.pows && typeof s.a.pows[e] === 'boolean') d.a.pows[e] = s.a.pows[e];
+    ['mul', 'div', 'inv', 'invr', 'pow', 'powr'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
     if ([0.7, 1, 1.6].indexOf(s.a.speed) >= 0) d.a.speed = s.a.speed;
   }
   if (s.p) {
@@ -1059,6 +1132,7 @@ function arithKeys() {
   if (S.mul) nums.forEach(function (a) { nums.forEach(function (b) { keys.push('m:' + a + ':' + b); }); });
   if (S.div) nums.forEach(function (a) { nums.forEach(function (b) { keys.push('d:' + a + ':' + b); }); });
   for (var x = 1; x <= 40; x++) if (S.invs[x]) { if (S.inv) keys.push('i:' + x); if (S.invr) keys.push('r:' + x); }
+  for (var e = 2; e <= 20; e++) if (S.pows[e]) { if (S.pow) keys.push('w:' + e); if (S.powr) keys.push('l:' + e); }
   return keys;
 }
 function learnedFrac(level) {
@@ -1080,11 +1154,22 @@ function phonKeys() {
 var DECK = {
   a: {
     keys: arithKeys, cap: 10,
-    factOf: function (k) { var p = k.split(':'); return p[0] === 'm' || p[0] === 'd' ? Math.min(+p[1], +p[2]) + 'x' + Math.max(+p[1], +p[2]) : 'inv' + p[1]; },
+    factOf: function (k) { var p = k.split(':'); return p[0] === 'm' || p[0] === 'd' ? Math.min(+p[1], +p[2]) + 'x' + Math.max(+p[1], +p[2]) : (p[0] === 'w' || p[0] === 'l' ? 'pow' : 'inv') + p[1]; },
     newPick: function (news) {
-      var inv = news.filter(function (k) { return k[0] === 'i' || k[0] === 'r'; });
-      var tab = news.filter(function (k) { return k[0] === 'm' || k[0] === 'd'; });
-      return pick(inv.length && (!tab.length || Math.random() < 0.3) ? inv : tab);
+      var groups = [
+        { w: 0.5, ks: news.filter(function (k) { return k[0] === 'm' || k[0] === 'd'; }) },
+        { w: 0.3, ks: news.filter(function (k) { return k[0] === 'i' || k[0] === 'r'; }) },
+        { w: 0.2, ks: news.filter(function (k) { return k[0] === 'w' || k[0] === 'l'; }) }
+      ].filter(function (g) { return g.ks.length; });
+      var tot = 0; groups.forEach(function (g) { tot += g.w; });
+      var r = Math.random() * tot, gi = 0;
+      while (gi < groups.length - 1 && r >= groups[gi].w) { r -= groups[gi].w; gi++; }
+      var ks = groups[gi].ks;
+      if (ks[0][0] === 'w' || ks[0][0] === 'l') {   /* powers: learn them in order, smallest exponent first */
+        var lo = Math.min.apply(null, ks.map(function (k) { return +k.split(':')[1]; }));
+        ks = ks.filter(function (k) { return +k.split(':')[1] === lo; });
+      }
+      return pick(ks);
     },
     make: function (k) { return makeArithCard(k); }
   },
@@ -1106,7 +1191,7 @@ var $ = function (id) { return document.getElementById(id); };
 var els = {};
 ['tab-a', 'tab-p', 'scN', 'scAcc', 'scAvg', 'scDue', 'card', 'qView', 'qTag', 'qBadge', 'qTime', 'qText', 'qPrompt', 'ansForm', 'ans', 'qUnit', 'btnGo', 'mc', 'hint', 'btnDunno', 'fb',
  'emptyState', 'emptyText', 'btnOpenSet', 'banner', 'bannerText', 'bannerClose', 'pad', 'padDot', 'padEnter', 'side-a', 'side-p', 'aSum', 'aKinds', 'aWeak', 'tGrid', 'tDetail', 'iGrid', 'iDetail',
- 'setA', 'aNums', 'aNumsQuick', 'aMul', 'aDiv', 'aInv', 'aInvr', 'aInvs', 'aInvsQuick', 'aSpeed', 'aAuto', 'aPad', 'aReset', 'pLevels', 'pTable', 'pRules', 'pTry', 'pTryOut', 'pWords',
+ 'setA', 'aNums', 'aNumsQuick', 'aMul', 'aDiv', 'aInv', 'aInvr', 'aInvs', 'aInvsQuick', 'aPow', 'aPowr', 'aPows', 'aPowsQuick', 'wGrid', 'wDetail', 'aSpeed', 'aAuto', 'aPad', 'aReset', 'pLevels', 'pTable', 'pRules', 'pTry', 'pTryOut', 'pWords',
  'pKinds', 'pWeak', 'setP', 'pLevelChecks', 'pUnlock', 'pSc0', 'pSpeed', 'pAuto', 'pPad', 'pReset', 'storeNote', 'pTablePanel'].forEach(function (id) { els[id] = $(id); });
 
 var tab = 'a';
@@ -1376,9 +1461,9 @@ function renderArithSide() {
   els.aSum.innerHTML = 'Imparate <b>' + learned + '</b> su <b>' + keys.length + '</b> · in apprendimento <b>' + learning + '</b> · mai viste <b>' + news + '</b>';
   els.aKinds.innerHTML = kindsTable('a');
   els.aWeak.innerHTML = weakList('a', keys);
-  renderTGrid(); renderIGrid();
+  renderTGrid(); renderIGrid(); renderWGrid();
 }
-var selT = null, selI = null;
+var selT = null, selI = null, selW = null;
 function cellLevel(keys) {
   var lv = 99, seen = false;
   keys.forEach(function (k) { var o = STATE.a.get(k); if (o) { seen = true; lv = Math.min(lv, levelOf(o)); } });
@@ -1418,6 +1503,20 @@ function renderIGrid() {
   }
   els.iGrid.innerHTML = h;
 }
+function renderWGrid() {
+  var S = settings.a, h = '';
+  for (var e = 2; e <= 20; e++) {
+    var lv = cellLevel(['w:' + e, 'l:' + e]);
+    h += '<button type="button" class="ic lv' + lv + (S.pows[e] ? '' : ' off') + (selW === e ? ' sel' : '') + '" data-e="' + e + '"><b>2<sup>' + e + '</sup></b><small>' + grp(Math.pow(2, e)) + '</small></button>';
+  }
+  els.wGrid.innerHTML = h;
+}
+els.wGrid.addEventListener('click', function (ev) {
+  var b = ev.target.closest('.ic'); if (!b) return;
+  var e = +b.getAttribute('data-e'); selW = e;
+  els.wDetail.innerHTML = '<b>2<sup>' + e + '</sup> = ' + grp(Math.pow(2, e)) + '</b> — ' + powHints(e).join(' ') + '<br>Potenza: ' + cardStatus('a', 'w:' + e) + '. Al contrario: ' + cardStatus('a', 'l:' + e) + '.';
+  renderWGrid();
+});
 els.iGrid.addEventListener('click', function (ev) {
   var b = ev.target.closest('.ic'); if (!b) return;
   var x = +b.getAttribute('data-x'); selI = x;
@@ -1463,16 +1562,16 @@ function renderAll() {
 }
 
 /* ---------- settings UI ---------- */
-function chipRow(el, max, obj) {
+function chipRow(el, max, obj, min) {
   var h = '';
-  for (var n = 1; n <= max; n++) h += '<button type="button" data-n="' + n + '" aria-pressed="' + (obj[n] ? 'true' : 'false') + '">' + n + '</button>';
+  for (var n = min || 1; n <= max; n++) h += '<button type="button" data-n="' + n + '" aria-pressed="' + (obj[n] ? 'true' : 'false') + '">' + n + '</button>';
   el.innerHTML = h;
 }
 function setSeg(seg, val) { Array.prototype.forEach.call(seg.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', parseFloat(b.getAttribute('data-v')) === val ? 'true' : 'false'); }); }
 function syncSettingsUI() {
   var A = settings.a, P = settings.p;
-  chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs);
-  els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr;
+  chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs); chipRow(els.aPows, 20, A.pows, 2);
+  els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr; els.aPow.checked = A.pow; els.aPowr.checked = A.powr;
   setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed);
   els.aAuto.checked = els.pAuto.checked = settings.auto;
   els.aPad.checked = els.pPad.checked = settings.pad;
@@ -1506,7 +1605,14 @@ function quick(el, getObj, max) {
 }
 quick(els.aNumsQuick, function () { return settings.a.nums; }, 20);
 quick(els.aInvsQuick, function () { return settings.a.invs; }, 40);
-[['aMul', 'mul'], ['aDiv', 'div'], ['aInv', 'inv'], ['aInvr', 'invr']].forEach(function (p) {
+els.aPows.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; var n = +b.getAttribute('data-n'); settings.a.pows[n] = !settings.a.pows[n]; settingsChanged('a', true); });
+els.aPowsQuick.addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'); if (!b) return;
+  var q = b.getAttribute('data-q');
+  for (var e = 2; e <= 20; e++) settings.a.pows[e] = q === 'all' ? true : q === 'none' ? false : q === 'low' ? e <= 10 : e > 10;
+  settingsChanged('a', true);
+});
+[['aMul', 'mul'], ['aDiv', 'div'], ['aInv', 'inv'], ['aInvr', 'invr'], ['aPow', 'pow'], ['aPowr', 'powr']].forEach(function (p) {
   els[p[0]].addEventListener('change', function () { settings.a[p[1]] = els[p[0]].checked; settingsChanged('a', true); });
 });
 els.aSpeed.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.speed = parseFloat(b.getAttribute('data-v')); settingsChanged('a', false); } });
