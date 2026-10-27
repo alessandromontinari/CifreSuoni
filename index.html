@@ -1290,6 +1290,54 @@ function memSlowness(k) {
 }
 function memQueued(k) { return MEM.Q.some(function (q) { return q.k === k; }); }
 function memQueue(k, gap) { MEM.Q = MEM.Q.filter(function (q) { return q.k !== k; }); MEM.Q.push({ k: k, at: MEM.n + gap + 1 }); }
+/* order of difficulty: tabelline within 10×10, then one factor 11–20, then both 11–20;
+   inside a level table by table (by the larger factor), multiplication before division.
+   Inverses and powers have their own ladders (x up to 10, 20, 40; exponents up to 10, then 20). */
+var MEM_TIER_NAME = { 1: 'Entro 10 × 10', 2: 'Fino a 10 × 20', 3: 'Da 11 a 20 × da 11 a 20' };
+function memFamily(k) { var t = k[0]; return t === 'm' || t === 'd' ? 'tab' : t === 'i' || t === 'r' ? 'inv' : 'pow'; }
+function memTier(k) {
+  var p = k.split(':'), t = p[0], a = +p[1], b = +p[2];
+  if (t === 'm' || t === 'd') { var hi = Math.max(a, b), lo = Math.min(a, b); return hi <= 10 ? 1 : lo <= 10 ? 2 : 3; }
+  if (t === 'i' || t === 'r') return a <= 10 ? 1 : a <= 20 ? 2 : 3;
+  return a <= 10 ? 1 : 2;
+}
+function memOrder(k) {
+  var p = k.split(':'), t = p[0], a = +p[1], b = +p[2], tier = memTier(k);
+  if (t === 'm' || t === 'd') return tier * 1e6 + Math.max(a, b) * 1e4 + Math.min(a, b) * 100 + (t === 'm' ? (a <= b ? 0 : 1) : (a <= b ? 2 : 3));
+  return tier * 1e6 + a * 100 + (t === 'i' || t === 'w' ? 0 : 1);
+}
+/* a division comes only once its multiplication is memorized (same for inverses and powers read backwards) */
+function memEligible(k, inSet) {
+  var p = k.split(':'), t = p[0], base = [];
+  if (t === 'd') base = ['m:' + p[1] + ':' + p[2], 'm:' + p[2] + ':' + p[1]];
+  else if (t === 'r') base = ['i:' + p[1]];
+  else if (t === 'l') base = ['w:' + p[1]];
+  return base.filter(function (x) { return inSet[x]; }).every(function (x) { return memStatus(x) === 'auto'; });
+}
+/* other tabelline with the same result (14 × 6 and 7 × 12 = 84), with both numbers among the active ones */
+function memSameProduct(k) {
+  var p = k.split(':'); if (p[0] !== 'm' && p[0] !== 'd') return [];
+  var a = +p[1], b = +p[2], prod = a * b, lo = Math.min(a, b), out = [];
+  for (var x = 1; x <= 20; x++) {
+    if (prod % x) continue;
+    var y = prod / x; if (y > 20 || y < x || x === lo) continue;
+    if (settings.a.nums[x] && settings.a.nums[y]) out.push([x, y]);
+  }
+  return out;
+}
+/* the facts still to work on, in order, for each family */
+function memLadder(keys, inSet, skip) {
+  var fams = { tab: [], inv: [], pow: [] };
+  keys.forEach(function (k) {
+    if (skip && skip(k)) return;
+    var st = memStatus(k); if (st !== 'target' && st !== 'unknown') return;
+    if (!memEligible(k, inSet)) return;
+    fams[memFamily(k)].push(k);
+  });
+  Object.keys(fams).forEach(function (f) { fams[f].sort(function (a, b) { return memOrder(a) - memOrder(b); }); });
+  return fams;
+}
+var MEM_FAM_W = { tab: 0.6, inv: 0.25, pow: 0.15 };
 function memNext() {
   var keys = learnedKeys(arithKeys());
   if (!keys.length) return null;
@@ -1303,36 +1351,55 @@ function memNext() {
   function failing(k) { var z = MZ.get(k); return z && z.s === 0 ? 0 : 1; }   /* the ones just calculated or missed keep their promise of coming back soon */
   var due = MEM.Q.filter(function (q) { return q.at <= MEM.n && free(q.k); }).sort(function (a, b) { return failing(a.k) - failing(b.k) || a.at - b.at; })[0];
   if (due) { MEM.Q.splice(MEM.Q.indexOf(due), 1); return due.k; }
-  /* 2. a new fact to fix, the slowest first */
-  if (MEM.W.length < MEM_WCAP) {
-    var best = null, bs = -Infinity;
-    keys.forEach(function (k) {
-      if (MEM.W.indexOf(k) >= 0 || !free(k) || memQueued(k) || memStatus(k) !== 'target') return;
-      var sc = memSlowness(k) + Math.random() * 0.15; if (sc > bs) { bs = sc; best = k; }
-    });
-    if (best) { MEM.W.push(best); return best; }
-  }
-  /* 3. fixed facts whose long-term check is due, the most overdue first */
-  var unk = [], auto = [], dueC = [], now = nowMin();
+  var now = nowMin(), auto = [], dueC = [];
   keys.forEach(function (k) {
-    if (!free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0) return;
-    var st = memStatus(k); if (st === 'unknown') unk.push(k); else if (st === 'auto') { auto.push(k); if (memCheckDue(k)) dueC.push(k); }
+    if (!free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0 || memStatus(k) !== 'auto') return;
+    auto.push(k); if (memCheckDue(k)) dueC.push(k);
   });
-  if (dueC.length) {
-    function over(k) { var z = MZ.get(k); return (now - memDueAt(z)) / (MEM_LONG[Math.min(z.lv || 0, MEM_LONG.length - 1)] * DAY); }
-    dueC.sort(function (a, b) { return over(b) - over(a); });
-    return pick(dueC.slice(0, 3));
+  function over(k) { var z = MZ.get(k); return (now - memDueAt(z)) / (MEM_LONG[Math.min(z.lv || 0, MEM_LONG.length - 1)] * DAY); }
+  dueC.sort(function (a, b) { return over(b) - over(a); });
+  var lad = memLadder(keys, inSet, function (k) { return !free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0; });
+  var fams = Object.keys(lad).filter(function (f) { return lad[f].length; });
+  /* 2. every other question, a long-term check that is due */
+  if (dueC.length && (MEM.n % 2 === 0 || !fams.length)) return dueC[0];
+  /* 3. the next fact on the ladder of difficulty */
+  if (fams.length) {
+    var tot = 0; fams.forEach(function (f) { tot += MEM_FAM_W[f]; });
+    var r = Math.random() * tot, fi = 0;
+    while (fi < fams.length - 1 && r >= MEM_FAM_W[fams[fi]]) { r -= MEM_FAM_W[fams[fi]]; fi++; }
+    var list = lad[fams[fi]], next = list[0];
+    if (memStatus(next) === 'target' && MEM.W.length >= MEM_WCAP) {
+      /* working set full: meanwhile check facts of the same level that should already be automatic */
+      var tier = memTier(next); next = list.filter(function (k) { return memStatus(k) === 'unknown' && memTier(k) <= tier; })[0];
+    }
+    if (next) {
+      if (memStatus(next) === 'target') MEM.W.push(next);
+      memBringSameProduct(next, inSet);
+      return next;
+    }
   }
-  /* 4. a fact never checked here that should already be automatic */
-  if (unk.length) return pick(unk);
-  /* 5. nothing due: the fixed facts closest to their check (reviews ahead of time) */
+  if (dueC.length) return dueC[0];
+  /* 4. nothing due: the fixed facts closest to their check (reviews ahead of time) */
   MEM.extra = true;
   if (auto.length) { auto.sort(function (a, b) { return memDueAt(MZ.get(a)) - memDueAt(MZ.get(b)); }); return pick(auto.slice(0, 5)); }
-  /* 6. nothing else to do: the next re-ask, or any learned fact */
+  /* 5. nothing else to do: the next re-ask, or any learned fact */
   var q = MEM.Q.filter(function (x) { return free(x.k); }).sort(function (a, b) { return a.at - b.at; })[0];
   if (q) { MEM.Q.splice(MEM.Q.indexOf(q), 1); return q.k; }
   var pool = keys.filter(free);
   return pick(pool.length ? pool : keys);
+}
+/* when a multiplication comes up for the first time, the ones with the same result follow right after */
+function memBringSameProduct(k, inSet) {
+  if (k[0] !== 'm') return;
+  var tier = memTier(k), gap = 0;
+  memSameProduct(k).forEach(function (pr) {
+    var cands = ['m:' + pr[0] + ':' + pr[1], 'm:' + pr[1] + ':' + pr[0]].filter(function (x) { return inSet[x] && memTier(x) <= tier; });
+    if (!cands.length) return;
+    var pk = cands.filter(function (x) { return memStatus(x) !== 'auto'; })[0] || cands[0];
+    if (memQueued(pk) || MEM.W.indexOf(pk) >= 0) return;
+    if (memStatus(pk) === 'target') MEM.W.push(pk);
+    memQueue(pk, gap); gap++;
+  });
 }
 /* update the memory record of a fact and decide when it comes back */
 function memAnswer(k, ok, ms, timeout) {
@@ -1577,6 +1644,8 @@ function showMemFeedback(c) {
   var title = mr.fast ? 'A memoria' : ok ? 'Calcolata' : res.timeout ? 'Tempo scaduto' : res.dunno ? 'Da imparare' : 'Sbagliato';
   var h = '<div class="verdict ' + (mr.fast ? 'g3' : ok ? 'g1' : 'g0') + '"><strong>' + title + '</strong><span class="mono">' + (res.timeout ? 'oltre ' + fmtSec(card.mem.limit) : fmtSec(c.ms)) + ' · soglia ' + fmtSec(mr.thr) + '</span></div>';
   h += '<div class="fact">' + memFactHTML(card) + '</div>';
+  var same = memSameProduct(card.key), pv = card.key.split(':');
+  if (same.length) h += '<p class="next" style="margin:0">Stesso risultato (' + (+pv[1] * +pv[2]) + '): ' + same.map(function (x) { return x[0] + ' × ' + x[1]; }).join(' · ') + '</p>';
   if (!ok && res.shown) h += '<dl class="cmp"><dt>Tua</dt><dd>' + esc(res.shown) + '</dd></dl>';
   var msg;
   var back = mr.wasFixed ? 'Era fissata: ora torna da fissare. ' : '';
@@ -1785,11 +1854,22 @@ function renderMemPanel() {
   if (MEM.W.length) {
     h += '<h3>In questo giro</h3><div class="mwork">' + MEM.W.map(function (k) { var z = MZ.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + memDots(z ? z.s : 0) + (z && z.n ? ' · ' + fmtSec(z.t) : '') + '</span></div>'; }).join('') + '</div>';
   }
-  var slow = keys.filter(function (k) { return memStatus(k) === 'target' && MEM.W.indexOf(k) < 0; }).sort(function (a, b) { return memSlowness(b) - memSlowness(a); }).slice(0, 6);
-  if (slow.length) h += '<h3>Le prossime da fissare</h3><div class="mwork">' + slow.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')</span></div>'; }).join('') + '</div>';
+  var inSet = {}; keys.forEach(function (k) { inSet[k] = 1; });
+  var tiers = {}; keys.forEach(function (k) {
+    if (memFamily(k) !== 'tab') return;
+    var t = memTier(k), x = tiers[t] || (tiers[t] = { m: [0, 0], d: [0, 0] }), c = x[k[0]];
+    c[1]++; if (memStatus(k) === 'auto') c[0]++;
+  });
+  if (Object.keys(tiers).length) {
+    h += '<h3>Tabelline per livello</h3><div class="tw"><table><thead><tr><th>Livello</th><th>× a memoria</th><th>÷ a memoria</th></tr></thead><tbody>' + Object.keys(tiers).sort().map(function (t) {
+      var x = tiers[t]; return '<tr><td>' + MEM_TIER_NAME[t] + '</td><td>' + (x.m[1] ? x.m[0] + '/' + x.m[1] : '–') + '</td><td>' + (x.d[1] ? x.d[0] + '/' + x.d[1] : '–') + '</td></tr>';
+    }).join('') + '</tbody></table></div><p class="note" style="margin:6px 0 0">Una divisione arriva quando la sua moltiplicazione è a memoria.</p>';
+  }
+  var lad = memLadder(keys, inSet, function (k) { return MEM.W.indexOf(k) >= 0 || memQueued(k); }).tab.slice(0, 6);
+  if (lad.length) h += '<h3>Le prossime, in ordine</h3><div class="mwork">' + lad.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + (memStatus(k) === 'unknown' ? 'da verificare' : fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')') + '</span></div>'; }).join('') + '</div>';
   var back = Object.keys(MEM.g).filter(function (k) { return memQueued(k); });
-  if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.map(function (k) { var c = makeArithCard(k), q = MEM.Q.filter(function (x) { return x.k === k; })[0]; return '<div><span>' + esc(c.plain) + '</span><span>tra ' + Math.max(1, q.at - MEM.n - 1) + ' domande</span></div>'; }).join('') + '</div>';
-  h += '<p class="note" style="margin:12px 0 0">Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
+  if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.map(function (k) { var c = makeArithCard(k), q = MEM.Q.filter(function (x) { return x.k === k; })[0]; return '<div><span>' + esc(c.plain) + '</span><span>tra ' + plural(Math.max(1, q.at - MEM.n - 1), 'domanda', 'domande') + '</span></div>'; }).join('') + '</div>';
+  h += '<p class="note" style="margin:12px 0 0">Si parte dalle tabelline entro 10 × 10, poi quelle con un numero da 11 a 20, poi quelle con tutti e due; le tabelline con lo stesso risultato arrivano una dopo l’altra. Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
   els.mBody.innerHTML = h;
 }
 function renderArithSide() {
