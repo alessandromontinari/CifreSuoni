@@ -73,6 +73,7 @@ img{max-width:100%}
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background-color: var(--paper);
   background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
@@ -308,6 +309,32 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .reset span { font-size: .84rem; }
 .store-note { font-size: .78rem; color: var(--muted); margin: 0; }
 
+/* memorization mode */
+.modebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.modebar .seg { background: var(--surface); }
+.modebar .seg button { padding: 7px 13px; font-size: .86rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.modebar .seg button.locked { color: var(--muted); }
+.modebar .seg button.locked[aria-pressed="true"] { color: var(--on-ink); }
+.modebar .seg svg { width: 12px; height: 12px; }
+.modenote { font-size: .78rem; color: var(--muted); min-width: 0; }
+.membar { position: relative; height: 6px; border-radius: 99px; background: var(--lv0); margin: 8px 0 0; overflow: hidden; }
+.membar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--verde); border-radius: 99px; transition: width .1s linear; }
+.membar.late i { background: var(--rosso); }
+.membar span { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: .55; }
+.fact { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 7vw, 2.3rem); line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.fact sup { font-size: .55em; line-height: 0; vertical-align: .8em; color: var(--blu); }
+.fact .op { color: var(--blu); font-weight: 700; }
+.dots { font-family: var(--f-mono); letter-spacing: .12em; color: var(--verde); white-space: nowrap; }
+.dots .o { color: var(--line-strong); }
+.badge.mem { border-color: var(--verde); color: var(--verde); background: var(--verde-soft); }
+.mwork { display: flex; flex-direction: column; }
+.mwork div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: .86rem; }
+.mwork div:last-child { border-bottom: 0; }
+.mwork span:first-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.mwork span:last-child { color: var(--muted); white-space: nowrap; font-size: .8rem; }
+.unlockbar { height: 6px; background: var(--lv0); border-radius: 99px; overflow: hidden; margin: 4px 0 10px; }
+.unlockbar i { display: block; height: 100%; background: var(--blu); border-radius: 99px; }
+
 @media (max-width: 420px) {
   .brand h1 { font-size: 1.85rem; }
   .tabs { width: 100%; }
@@ -315,6 +342,7 @@ details.set[open] summary::after { transform: rotate(-135deg); }
   .btn { padding: 0 15px; }
   .card { padding: 14px 14px; }
   .sc { padding: 7px 8px; }
+  .sc span { letter-spacing: .04em; }
   .sc b { font-size: .92rem; }
   .nchips button { height: 32px; font-size: .76rem; }
 }
@@ -334,16 +362,21 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 
   <main class="grid">
     <section class="drill" aria-label="Esercizio">
+      <div class="modebar" id="modeBar">
+        <div class="seg" id="modeSeg" role="group" aria-label="Modalità di allenamento"><button type="button" data-m="std">Standard</button><button type="button" data-m="mem" id="modeMemBtn">Memorizzazione</button></div>
+        <span class="modenote" id="modeNote"></span>
+      </div>
       <div class="score">
-        <div class="sc"><span>Oggi</span><b id="scN">0</b></div>
-        <div class="sc"><span>Giuste</span><b id="scAcc">–</b></div>
-        <div class="sc"><span>Tempo</span><b id="scAvg">–</b></div>
-        <div class="sc"><span>Ripassi</span><b id="scDue">0</b></div>
+        <div class="sc"><span id="scL1">Oggi</span><b id="scN">0</b></div>
+        <div class="sc"><span id="scL2">Giuste</span><b id="scAcc">–</b></div>
+        <div class="sc"><span id="scL3">Tempo</span><b id="scAvg">–</b></div>
+        <div class="sc"><span id="scL4">Ripassi</span><b id="scDue">0</b></div>
       </div>
 
       <article class="card" id="card">
         <div id="qView">
           <div class="q-head"><span class="tag" id="qTag"></span><span class="badge" id="qBadge"></span><span class="qtime" id="qTime">0.0 s</span></div>
+          <div class="membar" id="memBar" hidden aria-hidden="true"><i id="memFill"></i><span id="memTick"></span></div>
           <div class="question" id="qText"></div>
           <p class="prompt" id="qPrompt"></p>
           <form class="ansf" id="ansForm" autocomplete="off" novalidate>
@@ -375,6 +408,11 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 
     <aside class="side">
       <div id="side-a" class="side">
+        <section class="panel" id="memPanel" aria-label="Memorizzazione" hidden>
+          <h2>Memorizzazione</h2>
+          <div id="mBody"></div>
+        </section>
+
         <section class="panel" aria-label="Progressi aritmetica">
           <h2>Progressi</h2>
           <p class="sumline" id="aSum"></p>
@@ -385,9 +423,7 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 
         <section class="panel" aria-label="Mappa">
           <h2>Mappa delle tabelline</h2>
-          <div class="legend">
-            <span><i class="lv0"></i>Mai vista</span><span><i class="lv1"></i>Sbagliata di recente</span><span><i class="lv2"></i>In apprendimento</span><span><i class="lv3"></i>Imparata</span><span><i class="lv4"></i>Solida</span>
-          </div>
+          <div class="legend" id="tLegend"></div>
           <div class="mapwrap"><div class="tgrid" id="tGrid"></div></div>
           <p class="detail" id="tDetail">Tocca una casella per vedere come va quella tabellina.</p>
           <h3>Inverse 1/x</h3>
@@ -422,6 +458,13 @@ details.set[open] summary::after { transform: rotate(-135deg); }
             </div>
             <label class="check" for="aAuto"><input type="checkbox" id="aAuto"> Passa alla domanda dopo da sola se la risposta è giusta</label>
             <label class="check" for="aPad"><input type="checkbox" id="aPad"> Tastierino a schermo</label>
+            <p class="set-h">Memorizzazione</p>
+            <div class="set-row"><span>Tempo per dire “a memoria”</span>
+              <div class="seg" id="aMemSev"><button type="button" data-v="1.35">Largo</button><button type="button" data-v="1">Normale</button><button type="button" data-v="0.8">Stretto</button></div>
+            </div>
+            <label class="check" for="aMemReveal"><input type="checkbox" id="aMemReveal"> Quando la barra arriva in fondo mostra la risposta (così non fai in tempo a calcolarla)</label>
+            <label class="check" for="aMemCopy"><input type="checkbox" id="aMemCopy"> Dopo un errore fammi riscrivere la risposta giusta</label>
+            <label class="check" for="aMemUnlock"><input type="checkbox" id="aMemUnlock"> Sblocca subito la memorizzazione</label>
             <div class="reset" id="aReset"></div>
           </div>
         </details>
@@ -1015,10 +1058,15 @@ function defaultSettings() {
   for (var n = 1; n <= 20; n++) nums[n] = n >= 2;
   for (var x = 1; x <= 40; x++) invs[x] = x >= 2;
   for (var e = 2; e <= 20; e++) pows[e] = true;
-  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, speed: 1 }, p: { unlock: false, sc0: false, off: {}, speed: 1 }, auto: true, pad: coarse };
+  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, speed: 1, mode: 'std', memSev: 1, memReveal: true, memCopy: true, memUnlock: false, memAnn: false }, p: { unlock: false, sc0: false, off: {}, speed: 1 }, auto: true, pad: coarse };
 }
 var data = { v: 1, a: { u: 0, c: {} }, p: { u: 0, c: {}, w: {}, pmax: 1 }, m: { u: 0, s: defaultSettings(), st: { days: {}, kinds: {} } } };
 var STATE = { a: new Map(), p: new Map() };
+/* memorization: key -> { s: fast answers in a row, n: answers, f: fast answers, b: best ms, t: average ms, d: last answer, h: last fast answer,
+   lv: step of the long-term check ladder, due: when the next check is due (minutes) } */
+var MZ = new Map();
+function packZ(z) { return [z.s, z.n, z.f, Math.round(z.b), Math.round(z.t), Math.round(z.d), Math.round(z.h), z.lv || 0, Math.round(z.due || 0)]; }
+function unpackZ(a) { return { s: +a[0] || 0, n: +a[1] || 0, f: +a[2] || 0, b: +a[3] || 0, t: +a[4] || 0, d: +a[5] || 0, h: +a[6] || 0, lv: +a[7] || 0, due: +a[8] || 0 }; }
 var settings = data.m.s;
 
 function mergeSettings(s) {
@@ -1030,6 +1078,9 @@ function mergeSettings(s) {
     for (var e = 2; e <= 20; e++) if (s.a.pows && typeof s.a.pows[e] === 'boolean') d.a.pows[e] = s.a.pows[e];
     ['mul', 'div', 'inv', 'invr', 'pow', 'powr'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
     if ([0.7, 1, 1.6].indexOf(s.a.speed) >= 0) d.a.speed = s.a.speed;
+    if (s.a.mode === 'mem' || s.a.mode === 'std') d.a.mode = s.a.mode;
+    if ([0.8, 1, 1.35].indexOf(s.a.memSev) >= 0) d.a.memSev = s.a.memSev;
+    ['memReveal', 'memCopy', 'memUnlock', 'memAnn'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
   }
   if (s.p) {
     if (typeof s.p.unlock === 'boolean') d.p.unlock = s.p.unlock;
@@ -1047,7 +1098,8 @@ function adoptSection(sec, obj) {
     settings = data.m.s;
     return;
   }
-  data[sec] = sec === 'a' ? { u: obj.u || 0, c: obj.c || {} } : { u: obj.u || 0, c: obj.c || {}, w: obj.w || {}, pmax: obj.pmax || 1 };
+  data[sec] = sec === 'a' ? { u: obj.u || 0, c: obj.c || {}, z: obj.z || {} } : { u: obj.u || 0, c: obj.c || {}, w: obj.w || {}, pmax: obj.pmax || 1 };
+  if (sec === 'a') { MZ = new Map(); Object.keys(data.a.z).forEach(function (k) { if (Array.isArray(data.a.z[k])) MZ.set(k, unpackZ(data.a.z[k])); }); }
   var map = new Map();
   Object.keys(data[sec].c).forEach(function (k) { var a = data[sec].c[k]; if (Array.isArray(a) && a.length >= 10) map.set(k, unpackState(a)); });
   STATE[sec] = map;
@@ -1056,7 +1108,8 @@ function bodyOf(sec) {
   if (sec === 'm') return { u: data.m.u, s: settings, st: data.m.st };
   var c = {};
   STATE[sec].forEach(function (o, k) { c[k] = packState(o); });
-  return sec === 'a' ? { u: data.a.u, c: c } : { u: data.p.u, c: c, w: data.p.w, pmax: data.p.pmax };
+  if (sec === 'a') { var z = {}; MZ.forEach(function (o, k) { z[k] = packZ(o); }); return { u: data.a.u, c: c, z: z }; }
+  return { u: data.p.u, c: c, w: data.p.w, pmax: data.p.pmax };
 }
 
 var LS_KEY = 'cifresuoni.v1';
@@ -1186,13 +1239,169 @@ var DECK = {
   }
 };
 
+
+/* ================= memorization mode =================
+   The goal is recall, not calculation: an answer counts as “a memoria” only if it comes before a time threshold
+   (short enough that there is no time to work it out). Anything slower, wrong or not known joins a small working set
+   and comes back after 2 questions, then 4, then 8, until it has been answered from memory 3 times in a row.
+   Between those re-asks the app checks facts that should already be automatic. Only facts already learned in the
+   standard mode are used: memorization comes after understanding. */
+var MEM_KIND = { m: 'mul', d: 'div', i: 'inv', r: 'invr', w: 'pow', l: 'powr' };
+var MEM_EXTRA = { mul: 0, div: 300, inv: 500, invr: 500, pow: 200, powr: 400 };
+var MEM_WCAP = 6, MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
+/* fixed facts keep coming back: in the session after 16, 32, 64… questions; across days after 2, 6, 15, 40, 100, 240 days.
+   A slow or wrong answer at any point sends the fact back to be fixed again. */
+var MEM_LONG = [2, 6, 15, 40, 100, 240];
+var MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {} };
+function memResetSession() { MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {} }; }
+function memDueAt(z) { return z.due || ((z.h || z.d) + MEM_LONG[0] * DAY); }
+function memCheckDue(k) { var z = MZ.get(k); return !!z && z.s >= MEM_FIX && nowMin() >= memDueAt(z); }
+function memAnsLen(key) {
+  var p = key.split(':'), t = p[0], a = +p[1], b = +p[2];
+  if (t === 'm') return String(a * b).length;
+  if (t === 'i') return invShort(a).text.replace(/\D/g, '').length;
+  if (t === 'w') return String(Math.pow(2, a)).length;
+  return String(a).length;
+}
+/* time within which an answer counts as recalled from memory: about 1.2 s to recall plus typing time per digit */
+function memThr(key) {
+  var kind = MEM_KIND[key[0]];
+  return (1200 + 300 * memAnsLen(key) + (MEM_EXTRA[kind] || 0)) * (settings.a.memSev || 1) * (settings.pad ? 1.1 : 1);
+}
+function memLimit(thr) { return thr * 2 + 500; }
+function learnedKeys(keys) { return keys.filter(function (k) { var o = STATE.a.get(k); return o && o.s === -1; }); }
+function memNeed(keys) { return Math.min(50, Math.ceil(keys.length * 0.6)); }
+function memProgress() { var keys = arithKeys(), have = learnedKeys(keys).length, need = memNeed(keys); return { have: have, need: need, ok: settings.a.memUnlock || (keys.length > 0 && have >= need) }; }
+function memUnlocked() { return memProgress().ok; }
+function memOn() { return tab === 'a' && settings.a.mode === 'mem' && memUnlocked(); }
+/* auto: answered from memory 3 times in a row · target: still being calculated · unknown: learned, never checked here but fast in the standard mode */
+function memStatus(k) {
+  var z = MZ.get(k);
+  if (z && z.s >= MEM_FIX) return 'auto';
+  if (z && z.n > 0) return 'target';
+  var o = STATE.a.get(k);
+  if (!o || o.s !== -1) return 'none';
+  return o.t > memThr(k) || o.g <= 1 ? 'target' : 'unknown';
+}
+function memSlowness(k) {
+  var z = MZ.get(k), o = STATE.a.get(k), thr = memThr(k);
+  if (z && z.n) return z.t / thr + (z.s === 0 ? 0.3 : 0);
+  return (o ? o.t / thr : 1) + (o && o.g <= 1 ? 0.3 : 0) + (o && o.r ? (o.r - o.k) / o.r : 0);
+}
+function memQueued(k) { return MEM.Q.some(function (q) { return q.k === k; }); }
+function memQueue(k, gap) { MEM.Q = MEM.Q.filter(function (q) { return q.k !== k; }); MEM.Q.push({ k: k, at: MEM.n + gap + 1 }); }
+function memNext() {
+  var keys = learnedKeys(arithKeys());
+  if (!keys.length) return null;
+  var inSet = {}; keys.forEach(function (k) { inSet[k] = 1; });
+  MEM.W = MEM.W.filter(function (k) { return inSet[k] && memStatus(k) !== 'auto'; });
+  MEM.Q = MEM.Q.filter(function (q) { return inSet[q.k]; });
+  MEM.n++; MEM.extra = false;
+  var recent = MEM.last.slice(-Math.min(2, keys.length - 1));
+  function free(k) { return recent.indexOf(k) < 0; }
+  /* 1. a re-ask that is due */
+  function failing(k) { var z = MZ.get(k); return z && z.s === 0 ? 0 : 1; }   /* the ones just calculated or missed keep their promise of coming back soon */
+  var due = MEM.Q.filter(function (q) { return q.at <= MEM.n && free(q.k); }).sort(function (a, b) { return failing(a.k) - failing(b.k) || a.at - b.at; })[0];
+  if (due) { MEM.Q.splice(MEM.Q.indexOf(due), 1); return due.k; }
+  /* 2. a new fact to fix, the slowest first */
+  if (MEM.W.length < MEM_WCAP) {
+    var best = null, bs = -Infinity;
+    keys.forEach(function (k) {
+      if (MEM.W.indexOf(k) >= 0 || !free(k) || memQueued(k) || memStatus(k) !== 'target') return;
+      var sc = memSlowness(k) + Math.random() * 0.15; if (sc > bs) { bs = sc; best = k; }
+    });
+    if (best) { MEM.W.push(best); return best; }
+  }
+  /* 3. fixed facts whose long-term check is due, the most overdue first */
+  var unk = [], auto = [], dueC = [], now = nowMin();
+  keys.forEach(function (k) {
+    if (!free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0) return;
+    var st = memStatus(k); if (st === 'unknown') unk.push(k); else if (st === 'auto') { auto.push(k); if (memCheckDue(k)) dueC.push(k); }
+  });
+  if (dueC.length) {
+    function over(k) { var z = MZ.get(k); return (now - memDueAt(z)) / (MEM_LONG[Math.min(z.lv || 0, MEM_LONG.length - 1)] * DAY); }
+    dueC.sort(function (a, b) { return over(b) - over(a); });
+    return pick(dueC.slice(0, 3));
+  }
+  /* 4. a fact never checked here that should already be automatic */
+  if (unk.length) return pick(unk);
+  /* 5. nothing due: the fixed facts closest to their check (reviews ahead of time) */
+  MEM.extra = true;
+  if (auto.length) { auto.sort(function (a, b) { return memDueAt(MZ.get(a)) - memDueAt(MZ.get(b)); }); return pick(auto.slice(0, 5)); }
+  /* 6. nothing else to do: the next re-ask, or any learned fact */
+  var q = MEM.Q.filter(function (x) { return free(x.k); }).sort(function (a, b) { return a.at - b.at; })[0];
+  if (q) { MEM.Q.splice(MEM.Q.indexOf(q), 1); return q.k; }
+  var pool = keys.filter(free);
+  return pick(pool.length ? pool : keys);
+}
+/* update the memory record of a fact and decide when it comes back */
+function memAnswer(k, ok, ms, timeout) {
+  var thr = memThr(k), fast = ok && ms <= thr, now = nowMin(), prev = MZ.get(k);
+  var z = prev ? Object.assign({}, prev) : { s: 0, n: 0, f: 0, b: 0, t: 0, d: 0, h: 0 };
+  var counted = Math.min(ok ? ms : memLimit(thr), memLimit(thr) * 1.5);
+  z.n++; z.d = now; z.t = z.t ? z.t * 0.6 + counted * 0.4 : counted;
+  if (ok) z.b = z.b ? Math.min(z.b, ms) : ms;
+  var wasW = MEM.W.indexOf(k) >= 0, wasFixed = !!prev && prev.s >= MEM_FIX, check = wasFixed && now >= memDueAt(prev);
+  var out = { fast: fast, thr: thr, fixed: false, gap: null, confirmed: false, wasFixed: wasFixed, check: check, next: null };
+  if (fast) {
+    z.f++; z.h = now;
+    var o = STATE.a.get(k);
+    if (!prev && !wasW && o && o.t && o.t <= thr) { z.s = MEM_FIX; out.confirmed = true; }   /* already fast in the standard mode: one quick answer confirms it */
+    else z.s++;
+  } else { z.s = 0; z.lv = 0; z.due = 0; delete MEM.g[k]; }
+  MZ.set(k, z);
+  if (!fast) {
+    if (!wasW) MEM.W.push(k);
+    memQueue(k, MEM_GAPS[0]); out.gap = MEM_GAPS[0];
+    var p = k.split(':');   /* 7 × 8 slow: 8 × 7 comes back too, a bit later */
+    if (p[0] === 'm' && p[1] !== p[2]) {
+      var tw = 'm:' + p[2] + ':' + p[1], tws = STATE.a.get(tw);
+      if (tws && tws.s === -1 && arithKeys().indexOf(tw) >= 0 && !memQueued(tw) && memStatus(tw) !== 'auto') { memQueue(tw, MEM_GAPS[1]); if (MEM.W.indexOf(tw) < 0) MEM.W.push(tw); }
+    }
+  } else if (z.s >= MEM_FIX) {
+    MEM.W = MEM.W.filter(function (x) { return x !== k; });
+    if (!wasFixed) {
+      /* just fixed: out of the working set, but it comes back in this session after 16 questions and in 2 days */
+      z.lv = 0; z.due = now + MEM_LONG[0] * DAY; out.next = z.due - now;
+      if (!out.confirmed) { MEM.g[k] = MEM_AFTER; memQueue(k, MEM_AFTER); out.gap = MEM_AFTER; out.fixed = true; }
+    } else if (check) {
+      /* long-term check passed: the next one is further away */
+      z.lv = Math.min(MEM_LONG.length - 1, (z.lv || 0) + 1); z.due = now + fuzz(MEM_LONG[z.lv] * DAY); out.next = z.due - now;
+      MEM.Q = MEM.Q.filter(function (q) { return q.k !== k; }); delete MEM.g[k];
+    } else if (MEM.g[k]) {
+      /* re-asked in the same session: double the distance */
+      MEM.g[k] *= 2; memQueue(k, MEM.g[k]); out.gap = MEM.g[k]; out.next = memDueAt(z) - now;
+    } else out.next = memDueAt(z) - now;
+  } else {
+    if (!wasW) MEM.W.push(k);
+    out.gap = MEM_GAPS[Math.min(z.s, MEM_GAPS.length - 1)]; memQueue(k, out.gap);
+  }
+  out.z = z;
+  return out;
+}
+function memLevel(k) {
+  var o = STATE.a.get(k); if (!o || o.s !== -1) return 0;
+  var st = memStatus(k), z = MZ.get(k);
+  if (st === 'auto') return memCheckDue(k) ? 3 : 4;
+  if (z && z.n && z.s > 0) return 2;
+  return st === 'target' ? 1 : 3;
+}
+function memDots(s) { var h = ''; for (var i = 0; i < MEM_FIX; i++) h += i < s ? '●' : '<span class="o">○</span>'; return '<span class="dots" aria-label="' + s + ' su ' + MEM_FIX + '">' + h + '</span>'; }
+function memFactHTML(card) {
+  var p = card.key.split(':'), a = +p[1];
+  if (p[0] === 'w') return '2<sup>' + a + '</sup> <span class="op">=</span> ' + grp(Math.pow(2, a));
+  if (p[0] === 'l') return grp(Math.pow(2, a)) + ' <span class="op">=</span> 2<sup>' + a + '</sup>';
+  return esc(card.plain).replace(/ ([×÷=]) /g, ' <span class="op">$1</span> ');
+}
+
 /* ================= UI ================= */
 var $ = function (id) { return document.getElementById(id); };
 var els = {};
 ['tab-a', 'tab-p', 'scN', 'scAcc', 'scAvg', 'scDue', 'card', 'qView', 'qTag', 'qBadge', 'qTime', 'qText', 'qPrompt', 'ansForm', 'ans', 'qUnit', 'btnGo', 'mc', 'hint', 'btnDunno', 'fb',
  'emptyState', 'emptyText', 'btnOpenSet', 'banner', 'bannerText', 'bannerClose', 'pad', 'padDot', 'padEnter', 'side-a', 'side-p', 'aSum', 'aKinds', 'aWeak', 'tGrid', 'tDetail', 'iGrid', 'iDetail',
  'setA', 'aNums', 'aNumsQuick', 'aMul', 'aDiv', 'aInv', 'aInvr', 'aInvs', 'aInvsQuick', 'aPow', 'aPowr', 'aPows', 'aPowsQuick', 'wGrid', 'wDetail', 'aSpeed', 'aAuto', 'aPad', 'aReset', 'pLevels', 'pTable', 'pRules', 'pTry', 'pTryOut', 'pWords',
- 'pKinds', 'pWeak', 'setP', 'pLevelChecks', 'pUnlock', 'pSc0', 'pSpeed', 'pAuto', 'pPad', 'pReset', 'storeNote', 'pTablePanel'].forEach(function (id) { els[id] = $(id); });
+ 'pKinds', 'pWeak', 'setP', 'pLevelChecks', 'pUnlock', 'pSc0', 'pSpeed', 'pAuto', 'pPad', 'pReset', 'storeNote', 'pTablePanel',
+ 'modeBar', 'modeSeg', 'modeMemBtn', 'modeNote', 'scL1', 'scL2', 'scL3', 'scL4', 'memBar', 'memFill', 'memTick', 'memPanel', 'mBody', 'tLegend', 'aMemSev', 'aMemReveal', 'aMemCopy', 'aMemUnlock'].forEach(function (id) { els[id] = $(id); });
 
 var tab = 'a';
 try { var savedTab = localStorage.getItem('cifresuoni.tab'); if (savedTab === 'p' || savedTab === 'a') tab = savedTab; } catch (e) {}
@@ -1216,6 +1425,7 @@ function setTab(t) {
   els['tab-p'].setAttribute('aria-selected', t === 'p' ? 'true' : 'false');
   els['side-a'].hidden = t !== 'a';
   els['side-p'].hidden = t !== 'p';
+  els.modeBar.hidden = t !== 'a';
   els.banner.hidden = true;
   if (cur[t] && cur[t].card && !cur[t].answered) showCard(cur[t]);
   else nextQuestion();
@@ -1227,6 +1437,20 @@ els['tab-p'].addEventListener('click', function () { setTab('p'); });
 /* ---------- question flow ---------- */
 function nextQuestion() {
   clearTimeout(autoTimer);
+  if (memOn()) {
+    var mk = memNext();
+    if (!mk) { cur.a = null; showEmpty(); return; }
+    if (MEM.extra && !MEM.W.length && !MEM.told) {
+      MEM.told = true;
+      els.bannerText.innerHTML = '<b>Per oggi hai finito</b>: niente da fissare né da ricontrollare. Se continui, ripassi in anticipo quelle già fissate.';
+      els.banner.hidden = false;
+    }
+    var mc = makeArithCard(mk), thr = memThr(mk);
+    mc.mem = { thr: thr, limit: memLimit(thr) };
+    cur.a = { card: mc, start: performance.now(), answered: false, mem: true };
+    showCard(cur.a);
+    return;
+  }
   var deck = DECK[tab];
   var keys = deck.keys();
   if (!keys.length) { cur[tab] = null; showEmpty(); return; }
@@ -1237,7 +1461,9 @@ function nextQuestion() {
 }
 function showEmpty() {
   els.qView.hidden = true; els.emptyState.hidden = false; els.pad.hidden = true;
-  els.emptyText.textContent = tab === 'a' ? 'Nessun esercizio attivo: scegli almeno un numero e un tipo di esercizio nelle impostazioni.' : 'Nessun livello attivo: riattivane almeno uno nelle impostazioni.';
+  els.emptyText.textContent = memOn() ? 'Per la memorizzazione servono esercizi già imparati nella modalità Standard: tra quelli attivi non ce n’è ancora nessuno.'
+    : tab === 'a' ? 'Nessun esercizio attivo: scegli almeno un numero e un tipo di esercizio nelle impostazioni.' : 'Nessun livello attivo: riattivane almeno uno nelle impostazioni.';
+  els.memBar.hidden = true;
 }
 function showCard(c) {
   var card = c.card, o = STATE[tab].get(card.key);
@@ -1245,12 +1471,16 @@ function showCard(c) {
   els.card.classList.remove('is-ok', 'is-bad');
   els.qTag.textContent = card.tag;
   var badge = !o ? ['Nuova', 'new'] : o.s >= 0 ? (o.g === 0 ? ['Da rivedere', 'relearn'] : ['In apprendimento', '']) : ['Ripasso', ''];
+  if (c.mem) { var zz = MZ.get(card.key); badge = MEM.W.indexOf(card.key) >= 0 ? ['Da fissare', 'mem'] : memStatus(card.key) === 'auto' ? (memCheckDue(card.key) ? ['Ricontrollo', ''] : ['Fissata · ripasso', '']) : ['Verifica', '']; if (badge[1] === 'mem') badge[0] += ' ' + '●●●○○○'.substr(3 - Math.min(3, zz ? zz.s : 0), 3); }
   els.qBadge.textContent = badge[0]; els.qBadge.className = 'badge ' + badge[1];
+  els.memBar.hidden = !c.mem; els.memBar.classList.remove('late'); els.memFill.style.width = '0';
+  if (c.mem) els.memTick.style.left = (card.mem.thr / card.mem.limit * 100).toFixed(1) + '%';
+  c.copy = false;
   els.qText.innerHTML = card.qHTML;
   els.qPrompt.innerHTML = card.prompt;
   els.qUnit.textContent = card.unit || '';
   els.fb.hidden = true; els.fb.innerHTML = '';
-  els.hint.textContent = HINT_TXT[card.mode]; els.hint.classList.remove('warn');
+  els.hint.textContent = c.mem ? 'Rispondi solo se la sai a memoria, prima della tacca' : HINT_TXT[card.mode]; els.hint.classList.remove('warn');
   els.btnDunno.hidden = false;
   document.getElementById('btnTable').hidden = tab !== 'p';
   els.btnGo.textContent = 'Invia'; els.padEnter.textContent = 'Invia';
@@ -1283,12 +1513,20 @@ function applyPad() {
 }
 function flashHint(msg) { els.hint.textContent = msg; els.hint.classList.add('warn'); }
 
-function submit(dunno, mcIndex) {
+function submit(dunno, mcIndex, timeout) {
   var c = cur[tab];
   if (!c || !c.card) return;
+  if (c.answered && c.copy) {   /* memorization: write the right answer once before moving on */
+    if (dunno) { advance(); return; }
+    var cr = c.card.check(els.ans.value);
+    if (cr && cr.ok) { advance(); return; }
+    flashHint(els.ans.value.trim() ? 'Non è quella: guarda la risposta sopra e riscrivila.' : 'Riscrivi la risposta giusta, oppure “Non so” per saltare.');
+    return;
+  }
   if (c.answered) { advance(); return; }
   var card = c.card, res;
-  if (dunno) res = { ok: false, dunno: true };
+  if (timeout) res = { ok: false, timeout: true };
+  else if (dunno) res = { ok: false, dunno: true };
   else if (card.mode === 'mc') { if (mcIndex === undefined) return; res = card.check(mcIndex); res.mcIndex = mcIndex; }
   else {
     var raw = els.ans.value;
@@ -1298,6 +1536,7 @@ function submit(dunno, mcIndex) {
     if (res.invalid) { flashHint(res.invalid); return; }
   }
   var ms = performance.now() - c.start;
+  if (c.mem) { memSubmit(c, res, ms); return; }
   var g = gradeOf(card, res.ok, ms, settings[tab].speed);
   var prev = STATE[tab].get(card.key);
   var o = schedule(prev, g, nowMin(), ms);
@@ -1310,6 +1549,60 @@ function submit(dunno, mcIndex) {
   showFeedback(c, o);
   if (tab === 'p') checkUnlock();
   renderAll();
+}
+function memSubmit(c, res, ms) {
+  var card = c.card, k = card.key, now = nowMin();
+  /* the first time a fact shows up in a session it also counts as its standard review, if one is due */
+  if (!MEM.seen[k] && !res.timeout) {
+    MEM.seen[k] = 1;
+    var so = STATE.a.get(k);
+    if (so && so.d <= now) { STATE.a.set(k, schedule(so, gradeOf(card, !!res.ok, ms, settings.a.speed), now, ms)); }
+  }
+  var mr = memAnswer(k, !!res.ok, ms, !!res.timeout);
+  var st = data.m.st, dk = dayKey(Date.now()), day = st.days[dk] || (st.days[dk] = {}), zz = day.z || (day.z = [0, 0, 0]);
+  zz[0]++; if (mr.fast) zz[1]++; zz[2] += Math.round(Math.min(ms, card.mem.limit * 1.5));
+  MEM.last.push(k); if (MEM.last.length > 6) MEM.last.shift();
+  c.answered = true; c.res = res; c.ms = ms; c.mr = mr;
+  Store.mark('a'); Store.mark('m');
+  showMemFeedback(c);
+  renderAll();
+}
+function showMemFeedback(c) {
+  var card = c.card, res = c.res, mr = c.mr, ok = !!res.ok, z = mr.z;
+  if (mr.fast) els.card.classList.add('is-ok'); else if (!ok) els.card.classList.add('is-bad');
+  els.btnDunno.hidden = true;
+  els.hint.textContent = ''; els.hint.classList.remove('warn');
+  els.ans.readOnly = true;
+  els.memFill.style.width = Math.min(100, c.ms / card.mem.limit * 100).toFixed(1) + '%';
+  var title = mr.fast ? 'A memoria' : ok ? 'Calcolata' : res.timeout ? 'Tempo scaduto' : res.dunno ? 'Da imparare' : 'Sbagliato';
+  var h = '<div class="verdict ' + (mr.fast ? 'g3' : ok ? 'g1' : 'g0') + '"><strong>' + title + '</strong><span class="mono">' + (res.timeout ? 'oltre ' + fmtSec(card.mem.limit) : fmtSec(c.ms)) + ' · soglia ' + fmtSec(mr.thr) + '</span></div>';
+  h += '<div class="fact">' + memFactHTML(card) + '</div>';
+  if (!ok && res.shown) h += '<dl class="cmp"><dt>Tua</dt><dd>' + esc(res.shown) + '</dd></dl>';
+  var msg;
+  var back = mr.wasFixed ? 'Era fissata: ora torna da fissare. ' : '';
+  if (mr.fast) msg = mr.fixed ? 'Fissata ' + memDots(z.s) + ' Esce dal giro, ma torna tra ' + mr.gap + ' domande e poi ' + nextLabel(mr.next) + ', ogni volta più distante.'
+    : mr.confirmed ? 'Confermata: la sai a memoria. Prossimo ricontrollo ' + nextLabel(mr.next) + '.'
+    : mr.check ? 'Ancora a memoria: prossimo ricontrollo ' + nextLabel(mr.next) + '.'
+    : z.s >= MEM_FIX ? 'Ancora a memoria.' + (mr.gap ? ' Torna tra ' + mr.gap + ' domande.' : '') + ' Ricontrollo ' + nextLabel(mr.next) + '.'
+    : memDots(z.s) + ' Ancora ' + plural(MEM_FIX - z.s, 'volta', 'volte') + ' entro la soglia per fissarla: torna tra ' + mr.gap + ' domande.';
+  else if (ok) msg = back + 'Giusta, ma l’hai calcolata: a memoria arriva prima della tacca. ' + (back ? 'Torna' : 'Fissala adesso: torna') + ' tra ' + mr.gap + ' domande.';
+  else msg = back + (settings.a.memCopy ? 'Riscrivila qui sopra per fissarla. ' : '') + 'Torna tra ' + mr.gap + ' domande.';
+  var tips = !mr.fast && card.hints && card.hints.length ? '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + card.hints[0] + '</p></div>' : '';
+  var needBtn = !(mr.fast && settings.auto);
+  h += tips + '<div class="fb-actions" style="justify-content:space-between;align-items:center;gap:10px"><span class="next">' + msg + '</span>' + (needBtn && !(!ok && settings.a.memCopy) ? '<button type="button" class="btn primary small" id="btnNext">Avanti ↵</button>' : '') + '</div>';
+  els.fb.innerHTML = h; els.fb.hidden = false;
+  els.btnGo.textContent = 'Avanti'; els.padEnter.textContent = 'Avanti';
+  var bn = document.getElementById('btnNext');
+  if (bn) { bn.addEventListener('click', advance); if (settings.pad) { try { bn.focus({ preventScroll: true }); } catch (e) {} } }
+  if (!ok && settings.a.memCopy) {
+    c.copy = true;
+    els.card.classList.remove('is-bad');
+    els.ans.readOnly = false; els.ans.value = ''; els.ans.placeholder = 'riscrivi la risposta';
+    els.btnGo.textContent = 'Fatto'; els.padEnter.textContent = 'Fatto';
+    els.hint.textContent = 'Riscrivi la risposta giusta e premi Invio';
+    focusInput();
+  } else if (mr.fast && settings.auto) autoTimer = setTimeout(advance, 650);
+  else if (!settings.pad) { try { els.ans.focus({ preventScroll: true }); } catch (e) {} }
 }
 function record(sec, kind, ok, ms) {
   var st = data.m.st, dk = dayKey(Date.now());
@@ -1389,7 +1682,7 @@ els.pad.addEventListener('click', function (ev) {
   var b = ev.target.closest('button'); if (!b || b.disabled) return;
   var k = b.getAttribute('data-k'), c = cur[tab];
   if (k === 'enter') { submit(false); return; }
-  if (!c || c.answered) return;
+  if (!c || (c.answered && !c.copy)) return;
   if (k === 'dunno') { submit(true); return; }
   if (k === 'back') els.ans.value = els.ans.value.slice(0, -1);
   else els.ans.value += k;
@@ -1409,7 +1702,14 @@ els.btnOpenSet.addEventListener('click', function () { var d = tab === 'a' ? els
 
 setInterval(function () {
   var c = cur[tab];
-  if (c && c.card && !c.answered && !els.qView.hidden) els.qTime.textContent = ((performance.now() - c.start) / 1000).toFixed(1) + ' s';
+  if (!(c && c.card && !c.answered && !els.qView.hidden)) return;
+  var el = performance.now() - c.start;
+  els.qTime.textContent = (el / 1000).toFixed(1) + ' s';
+  if (c.mem) {
+    els.memFill.style.width = Math.min(100, el / c.card.mem.limit * 100).toFixed(1) + '%';
+    els.memBar.classList.toggle('late', el > c.card.mem.thr);
+    if (settings.a.memReveal && el >= c.card.mem.limit) submit(false, undefined, true);
+  }
 }, 100);
 
 /* ---------- rendering: score & progress ---------- */
@@ -1424,7 +1724,18 @@ function dueCount(sec) {
   return n;
 }
 function renderScore() {
-  var d = data.m.st.days[dayKey(Date.now())], a = d && d[tab] ? d[tab] : [0, 0, 0];
+  var d = data.m.st.days[dayKey(Date.now())], mem = memOn();
+  els.scL2.textContent = mem ? 'A memoria' : 'Giuste'; els.scL4.textContent = mem ? 'Da fissare' : 'Ripassi';
+  if (mem) {
+    var z = d && d.z ? d.z : [0, 0, 0], todo = 0;
+    learnedKeys(arithKeys()).forEach(function (k) { if (memStatus(k) === 'target') todo++; });
+    els.scN.textContent = String(z[0]);
+    els.scAcc.textContent = z[0] ? Math.round(z[1] / z[0] * 100) + '%' : '–';
+    els.scAvg.textContent = z[0] ? fmtSec(z[2] / z[0]) : '–';
+    els.scDue.textContent = String(todo);
+    return;
+  }
+  var a = d && d[tab] ? d[tab] : [0, 0, 0];
   els.scN.textContent = String(a[0]);
   els.scAcc.textContent = a[0] ? Math.round(a[1] / a[0] * 100) + '%' : '–';
   els.scAvg.textContent = a[0] ? fmtSec(a[2] / a[0]) : '–';
@@ -1455,7 +1766,35 @@ function weakList(sec, keys) {
     return '<div><span>' + esc(card.plain) + '</span><span>' + plural(errs, 'errore', 'errori') + ' · ' + fmtSec(it.o.t) + '</span></div>';
   }).join('') + '</div>';
 }
+var LEGEND_STD = [['lv0', 'Mai vista'], ['lv1', 'Sbagliata di recente'], ['lv2', 'In apprendimento'], ['lv3', 'Imparata'], ['lv4', 'Solida']];
+var LEGEND_MEM = [['lv0', 'Non ancora imparata'], ['lv1', 'La calcoli'], ['lv2', 'In fissaggio'], ['lv3', 'Da verificare o ricontrollare'], ['lv4', 'A memoria']];
+function renderMemPanel() {
+  var mem = memOn(), pr = memProgress();
+  els.memPanel.hidden = !(tab === 'a' && settings.a.mode === 'mem') && pr.ok;
+  if (els.memPanel.hidden) return;
+  var h = '';
+  if (!pr.ok) {
+    h += '<p class="note">Un allenamento per passare dal calcolare al ricordare: conta come giusta solo la risposta data entro pochi secondi, e quelle calcolate tornano subito finché non le dici a memoria. Lavora sugli esercizi già imparati, quindi si sblocca quando ne hai imparati <b>' + pr.need + '</b> tra quelli attivi.</p>' +
+      '<div class="unlockbar"><i style="width:' + Math.min(100, Math.round(pr.have / pr.need * 100)) + '%"></i></div><p class="sumline">Imparati <b>' + pr.have + '</b> su <b>' + pr.need + '</b></p>';
+    els.mBody.innerHTML = h; return;
+  }
+  var keys = learnedKeys(arithKeys()), n = { auto: 0, target: 0, unknown: 0 }, dueN = 0;
+  keys.forEach(function (k) { var st = memStatus(k); if (n[st] !== undefined) n[st]++; if (st === 'auto' && memCheckDue(k)) dueN++; });
+  h += '<p class="sumline">A memoria <b>' + n.auto + '</b>' + (dueN ? ' (<b>' + dueN + '</b> da ricontrollare)' : '') + ' · da fissare <b>' + n.target + '</b> · mai verificate <b>' + n.unknown + '</b> · su <b>' + keys.length + '</b> esercizi imparati</p>';
+  if (!mem) h += '<p class="note">Scegli <b>Memorizzazione</b> sopra la domanda per iniziare.</p>';
+  if (MEM.W.length) {
+    h += '<h3>In questo giro</h3><div class="mwork">' + MEM.W.map(function (k) { var z = MZ.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + memDots(z ? z.s : 0) + (z && z.n ? ' · ' + fmtSec(z.t) : '') + '</span></div>'; }).join('') + '</div>';
+  }
+  var slow = keys.filter(function (k) { return memStatus(k) === 'target' && MEM.W.indexOf(k) < 0; }).sort(function (a, b) { return memSlowness(b) - memSlowness(a); }).slice(0, 6);
+  if (slow.length) h += '<h3>Le prossime da fissare</h3><div class="mwork">' + slow.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')</span></div>'; }).join('') + '</div>';
+  var back = Object.keys(MEM.g).filter(function (k) { return memQueued(k); });
+  if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.map(function (k) { var c = makeArithCard(k), q = MEM.Q.filter(function (x) { return x.k === k; })[0]; return '<div><span>' + esc(c.plain) + '</span><span>tra ' + Math.max(1, q.at - MEM.n - 1) + ' domande</span></div>'; }).join('') + '</div>';
+  h += '<p class="note" style="margin:12px 0 0">Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
+  els.mBody.innerHTML = h;
+}
 function renderArithSide() {
+  renderMemPanel();
+  els.tLegend.innerHTML = (memOn() ? LEGEND_MEM : LEGEND_STD).map(function (x) { return '<span><i class="' + x[0] + '"></i>' + x[1] + '</span>'; }).join('');
   var keys = arithKeys(), learned = 0, learning = 0, news = 0;
   keys.forEach(function (k) { var o = STATE.a.get(k); if (!o) news++; else if (o.s >= 0) learning++; else learned++; });
   els.aSum.innerHTML = 'Imparate <b>' + learned + '</b> su <b>' + keys.length + '</b> · in apprendimento <b>' + learning + '</b> · mai viste <b>' + news + '</b>';
@@ -1465,6 +1804,7 @@ function renderArithSide() {
 }
 var selT = null, selI = null, selW = null;
 function cellLevel(keys) {
+  if (memOn()) { var ml = 99; keys.forEach(function (k) { ml = Math.min(ml, memLevel(k)); }); return ml === 99 ? 0 : ml; }
   var lv = 99, seen = false;
   keys.forEach(function (k) { var o = STATE.a.get(k); if (o) { seen = true; lv = Math.min(lv, levelOf(o)); } });
   return seen ? lv : 0;
@@ -1486,7 +1826,9 @@ function cardStatus(sec, key) {
   var o = STATE[sec].get(key);
   if (!o) return 'mai vista';
   var errs = o.r - o.k;
-  return plural(o.r, 'risposta', 'risposte') + (errs ? ', ' + plural(errs, 'errore', 'errori') : '') + ', ' + fmtSec(o.t) + ' di media, ripasso ' + nextLabel(Math.max(0, o.d - nowMin()));
+  var base = plural(o.r, 'risposta', 'risposte') + (errs ? ', ' + plural(errs, 'errore', 'errori') : '') + ', ' + fmtSec(o.t) + ' di media, ripasso ' + nextLabel(Math.max(0, o.d - nowMin()));
+  if (sec === 'a' && memOn()) { var z = MZ.get(key); base += '; memoria: ' + (z && z.n ? memDots(z.s) + ' ' + fmtSec(z.t) + ' di media, soglia ' + fmtSec(memThr(key)) + (z.s >= MEM_FIX ? ', ricontrollo ' + (memCheckDue(key) ? 'adesso' : nextLabel(memDueAt(z) - nowMin())) : '') : o.s === -1 ? 'non ancora verificata' : 'prima va imparata'); }
+  return base;
 }
 els.tGrid.addEventListener('click', function (ev) {
   var b = ev.target.closest('.tc'); if (!b) return;
@@ -1558,7 +1900,7 @@ els.pTry.addEventListener('input', function () {
 });
 function renderAll() {
   renderScore();
-  if (tab === 'a') renderArithSide(); else renderPhonSide();
+  if (tab === 'a') { renderModeBar(); renderArithSide(); } else renderPhonSide();
 }
 
 /* ---------- settings UI ---------- */
@@ -1572,7 +1914,9 @@ function syncSettingsUI() {
   var A = settings.a, P = settings.p;
   chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs); chipRow(els.aPows, 20, A.pows, 2);
   els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr; els.aPow.checked = A.pow; els.aPowr.checked = A.powr;
-  setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed);
+  setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed); setSeg(els.aMemSev, A.memSev);
+  els.aMemReveal.checked = A.memReveal; els.aMemCopy.checked = A.memCopy; els.aMemUnlock.checked = A.memUnlock;
+  renderModeBar();
   els.aAuto.checked = els.pAuto.checked = settings.auto;
   els.aPad.checked = els.pPad.checked = settings.pad;
   els.pUnlock.checked = P.unlock; els.pSc0.checked = P.sc0;
@@ -1582,6 +1926,32 @@ function syncSettingsUI() {
     return '<label class="check' + (dis ? ' dis' : '') + '" for="lvc' + lv.n + '"><input type="checkbox" id="lvc' + lv.n + '" data-l="' + lv.n + '"' + (!P.off[lv.n] && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '> ' + lv.n + ' · ' + esc(lv.name) + (dis ? ' (bloccato)' : '') + '</label>';
   }).join('');
 }
+var LOCK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+function renderModeBar() {
+  var pr = memProgress(), mem = memOn();
+  Array.prototype.forEach.call(els.modeSeg.querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', (b.getAttribute('data-m') === 'mem') === mem ? 'true' : 'false'); });
+  els.modeMemBtn.classList.toggle('locked', !pr.ok);
+  els.modeMemBtn.innerHTML = (pr.ok ? '' : LOCK_SVG) + 'Memorizzazione';
+  els.modeNote.textContent = pr.ok ? (mem ? 'Conta solo se la sai prima della tacca' : '') : 'Si sblocca a ' + pr.need + ' esercizi imparati (ora ' + pr.have + ')';
+  if (pr.ok && !settings.a.memAnn && !settings.a.memUnlock && tab === 'a') {
+    settings.a.memAnn = true; Store.mark('m');
+    els.bannerText.innerHTML = 'Hai sbloccato la <b>memorizzazione</b>: allena a ricordare le tabelline invece di calcolarle.';
+    els.banner.hidden = false;
+  }
+}
+els.modeSeg.addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'); if (!b) return;
+  var m = b.getAttribute('data-m');
+  if (m === 'mem' && !memUnlocked()) {
+    var pr = memProgress();
+    els.bannerText.innerHTML = 'La memorizzazione lavora sugli esercizi che hai già imparato: si sblocca quando ne hai imparati <b>' + pr.need + '</b> tra quelli attivi (ora ' + pr.have + '). Puoi anche sbloccarla subito dalle impostazioni.';
+    els.banner.hidden = false; return;
+  }
+  if (settings.a.mode === m) return;
+  settings.a.mode = m; Store.mark('m');
+  clearTimeout(autoTimer); cur.a = null;
+  syncSettingsUI(); nextQuestion(); renderAll();
+});
 function settingsChanged(sec, refresh) {
   Store.mark('m');
   syncSettingsUI();
@@ -1616,6 +1986,9 @@ els.aPowsQuick.addEventListener('click', function (ev) {
   els[p[0]].addEventListener('change', function () { settings.a[p[1]] = els[p[0]].checked; settingsChanged('a', true); });
 });
 els.aSpeed.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.speed = parseFloat(b.getAttribute('data-v')); settingsChanged('a', false); } });
+els.aMemSev.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.memSev = parseFloat(b.getAttribute('data-v')); settingsChanged('a', false); } });
+[['aMemReveal', 'memReveal'], ['aMemCopy', 'memCopy']].forEach(function (p) { els[p[0]].addEventListener('change', function () { settings.a[p[1]] = els[p[0]].checked; settingsChanged('a', false); }); });
+els.aMemUnlock.addEventListener('change', function () { settings.a.memUnlock = els.aMemUnlock.checked; if (!settings.a.memUnlock && settings.a.mode === 'mem' && !memUnlocked()) cur.a = null; settingsChanged('a', true); if (tab === 'a' && !cur.a) nextQuestion(); });
 els.pSpeed.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.p.speed = parseFloat(b.getAttribute('data-v')); settingsChanged('p', false); } });
 [els.aAuto, els.pAuto].forEach(function (el) { el.addEventListener('change', function () { settings.auto = el.checked; settingsChanged(tab, false); }); });
 [els.aPad, els.pPad].forEach(function (el) { el.addEventListener('change', function () { settings.pad = el.checked; settingsChanged(tab, false); applyPad(); focusInput(); }); });
@@ -1638,6 +2011,7 @@ function resetBox(el, sec) {
     el.innerHTML = '<span>Cancellare tutti i progressi di ' + (sec === 'a' ? 'aritmetica' : 'fonetica') + '?</span><button type="button" class="btn small primary">Azzera</button><button type="button" class="btn small ghost">Annulla</button>';
     el.children[1].addEventListener('click', function () {
       STATE[sec] = new Map();
+      if (sec === 'a') { MZ = new Map(); memResetSession(); Object.keys(data.m.st.days).forEach(function (d) { delete data.m.st.days[d].z; }); }
       if (sec === 'p') { data.p.w = {}; data.p.pmax = 1; }
       KIND_ORDER[sec].forEach(function (k) { delete data.m.st.kinds[k]; });
       Object.keys(data.m.st.days).forEach(function (d) { delete data.m.st.days[d][sec]; });
@@ -1748,6 +2122,8 @@ function mergeImport(obj) {
       if (!mine || o.r > mine.r || (o.r === mine.r && (o.d - o.i) > (mine.d - mine.i))) STATE[sec].set(k, o);
     });
   });
+  var zs = obj.a && obj.a.z ? obj.a.z : {};
+  Object.keys(zs).forEach(function (k) { if (!Array.isArray(zs[k])) return; var o = unpackZ(zs[k]), mine = MZ.get(k); if (!mine || o.n > mine.n) MZ.set(k, o); });
   if (obj.p) {
     var w = obj.p.w || {};
     Object.keys(w).forEach(function (n) { if (!data.p.w[n] && typeof w[n] === 'string') data.p.w[n] = w[n].slice(0, 30); });
@@ -1764,7 +2140,7 @@ function mergeImport(obj) {
   }
   Store.mark('a'); Store.mark('p'); Store.mark('m');
   clearTimeout(Store.timer); Store.timer = null; Store.flush();
-  cur = { a: null, p: null }; RECENT = { a: [], p: [] };
+  cur = { a: null, p: null }; RECENT = { a: [], p: [] }; memResetSession();
   syncSettingsUI(); nextQuestion(); renderAll();
 }
 setupBackup({
@@ -1789,6 +2165,7 @@ els['tab-a'].setAttribute('aria-selected', tab === 'a' ? 'true' : 'false');
 els['tab-p'].setAttribute('aria-selected', tab === 'p' ? 'true' : 'false');
 els['side-a'].hidden = tab !== 'a';
 els['side-p'].hidden = tab !== 'p';
+els.modeBar.hidden = tab !== 'a';
 nextQuestion();
 renderAll();
 Store.connect();

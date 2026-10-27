@@ -1,6 +1,6 @@
 /* Cifre e Suoni service worker: keeps the app usable offline. */
 const PREFIX = 'cifresuoni-';
-const CACHE = PREFIX + '2026-10-18-3';
+const CACHE = PREFIX + '2026-10-27-2';
 const PRECACHE = [
   "./",
   "./index.html",
