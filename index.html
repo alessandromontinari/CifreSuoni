@@ -460,8 +460,9 @@ details.set[open] summary::after { transform: rotate(-135deg); }
             <label class="check" for="aPad"><input type="checkbox" id="aPad"> Tastierino a schermo</label>
             <p class="set-h">Memorizzazione</p>
             <div class="set-row"><span>Tempo per dire “a memoria”</span>
-              <div class="seg" id="aMemSev"><button type="button" data-v="1.35">Largo</button><button type="button" data-v="1">Normale</button><button type="button" data-v="0.8">Stretto</button></div>
+              <div class="seg" id="aMemSev"><button type="button" data-v="1.8">Molto largo</button><button type="button" data-v="1.35">Largo</button><button type="button" data-v="1">Normale</button><button type="button" data-v="0.8">Stretto</button></div>
             </div>
+            <p class="note" id="aMemSevNote" style="margin:0"></p>
             <label class="check" for="aMemReveal"><input type="checkbox" id="aMemReveal"> Quando la barra arriva in fondo mostra la risposta (così non fai in tempo a calcolarla)</label>
             <label class="check" for="aMemCopy"><input type="checkbox" id="aMemCopy"> Dopo un errore fammi riscrivere la risposta giusta</label>
             <label class="check" for="aMemUnlock"><input type="checkbox" id="aMemUnlock"> Sblocca subito la memorizzazione</label>
@@ -1079,7 +1080,7 @@ function mergeSettings(s) {
     ['mul', 'div', 'inv', 'invr', 'pow', 'powr'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
     if ([0.7, 1, 1.6].indexOf(s.a.speed) >= 0) d.a.speed = s.a.speed;
     if (s.a.mode === 'mem' || s.a.mode === 'std') d.a.mode = s.a.mode;
-    if ([0.8, 1, 1.35].indexOf(s.a.memSev) >= 0) d.a.memSev = s.a.memSev;
+    if ([0.8, 1, 1.35, 1.8].indexOf(s.a.memSev) >= 0) d.a.memSev = s.a.memSev;
     ['memReveal', 'memCopy', 'memUnlock', 'memAnn'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
   }
   if (s.p) {
@@ -1252,8 +1253,8 @@ var MEM_WCAP = 6, MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
 /* fixed facts keep coming back: in the session after 16, 32, 64… questions; across days after 2, 6, 15, 40, 100, 240 days.
    A slow or wrong answer at any point sends the fact back to be fixed again. */
 var MEM_LONG = [2, 6, 15, 40, 100, 240];
-var MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {} };
-function memResetSession() { MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {} }; }
+var MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {} };
+function memResetSession() { MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {} }; }
 function memDueAt(z) { return z.due || ((z.h || z.d) + MEM_LONG[0] * DAY); }
 function memCheckDue(k) { var z = MZ.get(k); return !!z && z.s >= MEM_FIX && nowMin() >= memDueAt(z); }
 function memAnsLen(key) {
@@ -1263,12 +1264,12 @@ function memAnsLen(key) {
   if (t === 'w') return String(Math.pow(2, a)).length;
   return String(a).length;
 }
-/* time within which an answer counts as recalled from memory: about 1.2 s to recall plus typing time per digit */
+/* time within which an answer counts as recalled from memory: about 2 s to read and recall plus typing time per digit */
 function memThr(key) {
   var kind = MEM_KIND[key[0]];
-  return (1200 + 300 * memAnsLen(key) + (MEM_EXTRA[kind] || 0)) * (settings.a.memSev || 1) * (settings.pad ? 1.1 : 1);
+  return (2000 + 400 * memAnsLen(key) + (MEM_EXTRA[kind] || 0)) * (settings.a.memSev || 1) * (settings.pad ? 1.1 : 1);
 }
-function memLimit(thr) { return thr * 2 + 500; }
+function memLimit(thr) { return thr * 2 + 1000; }
 function learnedKeys(keys) { return keys.filter(function (k) { var o = STATE.a.get(k); return o && o.s === -1; }); }
 function memNeed(keys) { return Math.min(50, Math.ceil(keys.length * 0.6)); }
 function memProgress() { var keys = arithKeys(), have = learnedKeys(keys).length, need = memNeed(keys); return { have: have, need: need, ok: settings.a.memUnlock || (keys.length > 0 && have >= need) }; }
@@ -1289,7 +1290,7 @@ function memSlowness(k) {
   return (o ? o.t / thr : 1) + (o && o.g <= 1 ? 0.3 : 0) + (o && o.r ? (o.r - o.k) / o.r : 0);
 }
 function memQueued(k) { return MEM.Q.some(function (q) { return q.k === k; }); }
-function memQueue(k, gap) { MEM.Q = MEM.Q.filter(function (q) { return q.k !== k; }); MEM.Q.push({ k: k, at: MEM.n + gap + 1 }); }
+function memQueue(k, gap) { MEM.Q = MEM.Q.filter(function (q) { return q.k !== k; }); MEM.Q.push({ k: k, at: MEM.n + gap + 1 + (gap >= 4 ? Math.floor(Math.random() * 3) - 1 : 0) }); }
 /* order of difficulty: tabelline within 10×10, then one factor 11–20, then both 11–20;
    inside a level table by table (by the larger factor), multiplication before division.
    Inverses and powers have their own ladders (x up to 10, 20, 40; exponents up to 10, then 20). */
@@ -1367,11 +1368,16 @@ function memNext() {
     var tot = 0; fams.forEach(function (f) { tot += MEM_FAM_W[f]; });
     var r = Math.random() * tot, fi = 0;
     while (fi < fams.length - 1 && r >= MEM_FAM_W[fams[fi]]) { r -= MEM_FAM_W[fams[fi]]; fi++; }
-    var list = lad[fams[fi]], next = list[0];
-    if (memStatus(next) === 'target' && MEM.W.length >= MEM_WCAP) {
-      /* working set full: meanwhile check facts of the same level that should already be automatic */
-      var tier = memTier(next); next = list.filter(function (k) { return memStatus(k) === 'unknown' && memTier(k) <= tier; })[0];
-    }
+    /* not always the very next one: one of the next few of the same level, the earlier ones more likely */
+    var list = lad[fams[fi]], tier = memTier(list[0]);
+    var win = list.filter(function (k) { return memTier(k) === tier; }).slice(0, 6);
+    if (MEM.W.length >= MEM_WCAP) win = win.filter(function (k) { return memStatus(k) === 'unknown'; });   /* working set full: only checks of facts that should already be automatic */
+    var next = null;
+    if (win.length) {
+      var wts = [0.3, 0.22, 0.17, 0.13, 0.1, 0.08].slice(0, win.length), wt = 0; wts.forEach(function (x) { wt += x; });
+      var rr = Math.random() * wt, wi = 0; while (wi < win.length - 1 && rr >= wts[wi]) { rr -= wts[wi]; wi++; }
+      next = win[wi];
+    } else if (MEM.W.length >= MEM_WCAP) next = list.filter(function (k) { return memStatus(k) === 'unknown' && memTier(k) <= tier; })[0];
     if (next) {
       if (memStatus(next) === 'target') MEM.W.push(next);
       memBringSameProduct(next, inSet);
@@ -1391,14 +1397,17 @@ function memNext() {
 /* when a multiplication comes up for the first time, the ones with the same result follow right after */
 function memBringSameProduct(k, inSet) {
   if (k[0] !== 'm') return;
-  var tier = memTier(k), gap = 0;
+  var p = k.split(':'), fk = +p[1] * +p[2];
+  if (MEM.sp[fk] || Math.random() < 0.4) return;   /* about half the time, and once per result in a session */
+  MEM.sp[fk] = 1;
+  var tier = memTier(k), gap = 1 + Math.floor(Math.random() * 3);
   memSameProduct(k).forEach(function (pr) {
     var cands = ['m:' + pr[0] + ':' + pr[1], 'm:' + pr[1] + ':' + pr[0]].filter(function (x) { return inSet[x] && memTier(x) <= tier; });
     if (!cands.length) return;
     var pk = cands.filter(function (x) { return memStatus(x) !== 'auto'; })[0] || cands[0];
     if (memQueued(pk) || MEM.W.indexOf(pk) >= 0) return;
     if (memStatus(pk) === 'target') MEM.W.push(pk);
-    memQueue(pk, gap); gap++;
+    memQueue(pk, gap); gap += 2 + Math.floor(Math.random() * 3);
   });
 }
 /* update the memory record of a fact and decide when it comes back */
@@ -1423,7 +1432,7 @@ function memAnswer(k, ok, ms, timeout) {
     var p = k.split(':');   /* 7 × 8 slow: 8 × 7 comes back too, a bit later */
     if (p[0] === 'm' && p[1] !== p[2]) {
       var tw = 'm:' + p[2] + ':' + p[1], tws = STATE.a.get(tw);
-      if (tws && tws.s === -1 && arithKeys().indexOf(tw) >= 0 && !memQueued(tw) && memStatus(tw) !== 'auto') { memQueue(tw, MEM_GAPS[1]); if (MEM.W.indexOf(tw) < 0) MEM.W.push(tw); }
+      if (tws && tws.s === -1 && arithKeys().indexOf(tw) >= 0 && !memQueued(tw) && memStatus(tw) !== 'auto') { memQueue(tw, 3 + Math.floor(Math.random() * 3)); if (MEM.W.indexOf(tw) < 0) MEM.W.push(tw); }
     }
   } else if (z.s >= MEM_FIX) {
     MEM.W = MEM.W.filter(function (x) { return x !== k; });
@@ -1468,7 +1477,7 @@ var els = {};
  'emptyState', 'emptyText', 'btnOpenSet', 'banner', 'bannerText', 'bannerClose', 'pad', 'padDot', 'padEnter', 'side-a', 'side-p', 'aSum', 'aKinds', 'aWeak', 'tGrid', 'tDetail', 'iGrid', 'iDetail',
  'setA', 'aNums', 'aNumsQuick', 'aMul', 'aDiv', 'aInv', 'aInvr', 'aInvs', 'aInvsQuick', 'aPow', 'aPowr', 'aPows', 'aPowsQuick', 'wGrid', 'wDetail', 'aSpeed', 'aAuto', 'aPad', 'aReset', 'pLevels', 'pTable', 'pRules', 'pTry', 'pTryOut', 'pWords',
  'pKinds', 'pWeak', 'setP', 'pLevelChecks', 'pUnlock', 'pSc0', 'pSpeed', 'pAuto', 'pPad', 'pReset', 'storeNote', 'pTablePanel',
- 'modeBar', 'modeSeg', 'modeMemBtn', 'modeNote', 'scL1', 'scL2', 'scL3', 'scL4', 'memBar', 'memFill', 'memTick', 'memPanel', 'mBody', 'tLegend', 'aMemSev', 'aMemReveal', 'aMemCopy', 'aMemUnlock'].forEach(function (id) { els[id] = $(id); });
+ 'modeBar', 'modeSeg', 'modeMemBtn', 'modeNote', 'scL1', 'scL2', 'scL3', 'scL4', 'memBar', 'memFill', 'memTick', 'memPanel', 'mBody', 'tLegend', 'aMemSev', 'aMemSevNote', 'aMemReveal', 'aMemCopy', 'aMemUnlock'].forEach(function (id) { els[id] = $(id); });
 
 var tab = 'a';
 try { var savedTab = localStorage.getItem('cifresuoni.tab'); if (savedTab === 'p' || savedTab === 'a') tab = savedTab; } catch (e) {}
@@ -1995,6 +2004,8 @@ function syncSettingsUI() {
   chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs); chipRow(els.aPows, 20, A.pows, 2);
   els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr; els.aPow.checked = A.pow; els.aPowr.checked = A.powr;
   setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed); setSeg(els.aMemSev, A.memSev);
+  var t1 = memThr('m:7:8'), t2 = memThr('m:17:13');
+  els.aMemSevNote.textContent = 'Per esempio 7 × 8 entro ' + fmtSec(t1) + ' e 17 × 13 entro ' + fmtSec(t2) + '; la risposta compare da sola dopo ' + fmtSec(memLimit(t1)) + ' e ' + fmtSec(memLimit(t2)) + '.';
   els.aMemReveal.checked = A.memReveal; els.aMemCopy.checked = A.memCopy; els.aMemUnlock.checked = A.memUnlock;
   renderModeBar();
   els.aAuto.checked = els.pAuto.checked = settings.auto;
