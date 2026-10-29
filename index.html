@@ -1253,8 +1253,8 @@ var MEM_WCAP = 6, MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
 /* fixed facts keep coming back: in the session after 16, 32, 64… questions; across days after 2, 6, 15, 40, 100, 240 days.
    A slow or wrong answer at any point sends the fact back to be fixed again. */
 var MEM_LONG = [2, 6, 15, 40, 100, 240];
-var MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {} };
-function memResetSession() { MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {} }; }
+var MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {}, trap: {}, tr: {} };
+function memResetSession() { MEM = { W: [], Q: [], n: 0, seen: {}, last: [], g: {}, sp: {}, trap: {}, tr: {} }; }
 function memDueAt(z) { return z.due || ((z.h || z.d) + MEM_LONG[0] * DAY); }
 function memCheckDue(k) { var z = MZ.get(k); return !!z && z.s >= MEM_FIX && nowMin() >= memDueAt(z); }
 function memAnsLen(key) {
@@ -1394,6 +1394,23 @@ function memNext() {
   var pool = keys.filter(free);
   return pick(pool.length ? pool : keys);
 }
+/* tabelline easy to swap: 16 × 7 and 17 × 6 (the units of the teen number and the one-digit number swapped, up to 2 apart).
+   Same last digit, and they differ by 10 × the gap between the one-digit numbers. */
+function memConfusable(k) {
+  var p = k.split(':'); if (p[0] !== 'm') return null;
+  var a = +p[1], b = +p[2], tf = a >= 11 && a <= 19 && b >= 2 && b <= 9, ts = b >= 11 && b <= 19 && a >= 2 && a <= 9;
+  if (!tf && !ts) return null;
+  var u = (tf ? a : b) - 10, v = tf ? b : a;
+  if (u < 2 || u === v || Math.abs(u - v) > 2) return null;
+  if (!settings.a.nums[10 + v] || !settings.a.nums[u]) return null;
+  return tf ? 'm:' + (10 + v) + ':' + u : 'm:' + u + ':' + (10 + v);
+}
+function memPlainOf(k) { var p = k.split(':'); return p[1] + ' × ' + p[2] + ' = ' + (+p[1] * +p[2]); }
+function memContrast(k, other) {
+  var p = k.split(':'), q = other.split(':'), P = +p[1] * +p[2], Q = +q[1] * +q[2];
+  var big = P > Q ? memPlainOf(k).split(' =')[0] : memPlainOf(other).split(' =')[0];
+  return '<b>' + memPlainOf(k) + '</b> · <b>' + memPlainOf(other) + '</b>: stessa cifra finale, differiscono di ' + Math.abs(P - Q) + '. È più grande quella col numero a una cifra più grande (' + big + ').';
+}
 /* when a multiplication comes up for the first time, the ones with the same result follow right after */
 function memBringSameProduct(k, inSet) {
   if (k[0] !== 'm') return;
@@ -1451,6 +1468,12 @@ function memAnswer(k, ok, ms, timeout) {
   } else {
     if (!wasW) MEM.W.push(k);
     out.gap = MEM_GAPS[Math.min(z.s, MEM_GAPS.length - 1)]; memQueue(k, out.gap);
+  }
+  /* after a few quick answers, the easy-to-swap twin comes up by surprise, to check they are not mixed up */
+  var cf = memConfusable(k);
+  if (cf && fast && z.s >= 2 && STATE.a.get(cf) && STATE.a.get(cf).s === -1 && arithKeys().indexOf(cf) >= 0 && !memQueued(cf) && !MEM.trap[k]) {
+    var pid = [k, cf].sort().join('|');
+    if ((MEM.tr[pid] || 0) < 2 && Math.random() < 0.7) { MEM.tr[pid] = (MEM.tr[pid] || 0) + 1; MEM.trap[cf] = k; memQueue(cf, 1 + Math.floor(Math.random() * 3)); }
   }
   out.z = z;
   return out;
@@ -1634,7 +1657,12 @@ function memSubmit(c, res, ms) {
     var so = STATE.a.get(k);
     if (so && so.d <= now) { STATE.a.set(k, schedule(so, gradeOf(card, !!res.ok, ms, settings.a.speed), now, ms)); }
   }
+  var cf = memConfusable(k);
+  if (cf && !res.ok && res.shown) { var cq = cf.split(':'); if (+String(res.shown).replace(/\D/g, '') === +cq[1] * +cq[2]) res.confused = cf; }
+  c.trapOf = MEM.trap[k] || null;
   var mr = memAnswer(k, !!res.ok, ms, !!res.timeout);
+  delete MEM.trap[k];
+  if (res.confused) { memQueue(cf, 2 + Math.floor(Math.random() * 2)); if (MEM.W.indexOf(cf) < 0 && memStatus(cf) !== 'auto') MEM.W.push(cf); }
   var st = data.m.st, dk = dayKey(Date.now()), day = st.days[dk] || (st.days[dk] = {}), zz = day.z || (day.z = [0, 0, 0]);
   zz[0]++; if (mr.fast) zz[1]++; zz[2] += Math.round(Math.min(ms, card.mem.limit * 1.5));
   MEM.last.push(k); if (MEM.last.length > 6) MEM.last.shift();
@@ -1650,12 +1678,14 @@ function showMemFeedback(c) {
   els.hint.textContent = ''; els.hint.classList.remove('warn');
   els.ans.readOnly = true;
   els.memFill.style.width = Math.min(100, c.ms / card.mem.limit * 100).toFixed(1) + '%';
-  var title = mr.fast ? 'A memoria' : ok ? 'Calcolata' : res.timeout ? 'Tempo scaduto' : res.dunno ? 'Da imparare' : 'Sbagliato';
+  var title = mr.fast ? 'A memoria' : ok ? 'Calcolata' : res.timeout ? 'Tempo scaduto' : res.dunno ? 'Da imparare' : res.confused ? 'Scambiata' : 'Sbagliato';
   var h = '<div class="verdict ' + (mr.fast ? 'g3' : ok ? 'g1' : 'g0') + '"><strong>' + title + '</strong><span class="mono">' + (res.timeout ? 'oltre ' + fmtSec(card.mem.limit) : fmtSec(c.ms)) + ' · soglia ' + fmtSec(mr.thr) + '</span></div>';
   h += '<div class="fact">' + memFactHTML(card) + '</div>';
   var same = memSameProduct(card.key), pv = card.key.split(':');
   if (same.length) h += '<p class="next" style="margin:0">Stesso risultato (' + (+pv[1] * +pv[2]) + '): ' + same.map(function (x) { return x[0] + ' × ' + x[1]; }).join(' · ') + '</p>';
-  if (!ok && res.shown) h += '<dl class="cmp"><dt>Tua</dt><dd>' + esc(res.shown) + '</dd></dl>';
+  if (!ok && res.shown) h += '<dl class="cmp"><dt>Tua</dt><dd>' + esc(res.shown) + (res.confused ? ' <span class="next">(è ' + memPlainOf(res.confused).split(' =')[0] + ')</span>' : '') + '</dd></dl>';
+  var cfk = memConfusable(card.key), trapTxt = '';
+  if (c.trapOf && ok) trapTxt = mr.fast ? 'Era una trappola: non l’hai confusa con ' + memPlainOf(c.trapOf) + '.' : 'Era una trappola: giusta, ma ci hai messo un po’. Non confonderla con ' + memPlainOf(c.trapOf) + '.';
   var msg;
   var back = mr.wasFixed ? 'Era fissata: ora torna da fissare. ' : '';
   if (mr.fast) msg = mr.fixed ? 'Fissata ' + memDots(z.s) + ' Esce dal giro, ma torna tra ' + mr.gap + ' domande e poi ' + nextLabel(mr.next) + ', ogni volta più distante.'
@@ -1665,7 +1695,11 @@ function showMemFeedback(c) {
     : memDots(z.s) + ' Ancora ' + plural(MEM_FIX - z.s, 'volta', 'volte') + ' entro la soglia per fissarla: torna tra ' + mr.gap + ' domande.';
   else if (ok) msg = back + 'Giusta, ma l’hai calcolata: a memoria arriva prima della tacca. ' + (back ? 'Torna' : 'Fissala adesso: torna') + ' tra ' + mr.gap + ' domande.';
   else msg = back + (settings.a.memCopy ? 'Riscrivila qui sopra per fissarla. ' : '') + 'Torna tra ' + mr.gap + ' domande.';
-  var tips = !mr.fast && card.hints && card.hints.length ? '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + card.hints[0] + '</p></div>' : '';
+  var tips = '';
+  if (cfk && (!mr.fast || res.confused || c.trapOf)) tips += '<div class="tipbox"><span class="lab">Da non confondere</span><p>' + memContrast(card.key, cfk) + '</p></div>';
+  else if (!mr.fast && card.hints && card.hints.length) tips += '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + card.hints[0] + '</p></div>';
+  if (trapTxt) msg = trapTxt + ' ' + msg;
+  if (res.confused) msg = 'Le due tornano a breve una vicina all’altra. ' + msg;
   var needBtn = !(mr.fast && settings.auto);
   h += tips + '<div class="fb-actions" style="justify-content:space-between;align-items:center;gap:10px"><span class="next">' + msg + '</span>' + (needBtn && !(!ok && settings.a.memCopy) ? '<button type="button" class="btn primary small" id="btnNext">Avanti ↵</button>' : '') + '</div>';
   els.fb.innerHTML = h; els.fb.hidden = false;
@@ -1878,7 +1912,7 @@ function renderMemPanel() {
   if (lad.length) h += '<h3>Le prossime, in ordine</h3><div class="mwork">' + lad.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + (memStatus(k) === 'unknown' ? 'da verificare' : fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')') + '</span></div>'; }).join('') + '</div>';
   var back = Object.keys(MEM.g).filter(function (k) { return memQueued(k); });
   if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.map(function (k) { var c = makeArithCard(k), q = MEM.Q.filter(function (x) { return x.k === k; })[0]; return '<div><span>' + esc(c.plain) + '</span><span>tra ' + plural(Math.max(1, q.at - MEM.n - 1), 'domanda', 'domande') + '</span></div>'; }).join('') + '</div>';
-  h += '<p class="note" style="margin:12px 0 0">Si parte dalle tabelline entro 10 × 10, poi quelle con un numero da 11 a 20, poi quelle con tutti e due; le tabelline con lo stesso risultato arrivano una dopo l’altra. Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
+  h += '<p class="note" style="margin:12px 0 0">Si parte dalle tabelline entro 10 × 10, poi quelle con un numero da 11 a 20, poi quelle con tutti e due; le tabelline con lo stesso risultato ogni tanto arrivano vicine. Quelle facili da scambiare, come 16 × 7 e 17 × 6, dopo un paio di risposte veloci arrivano a tradimento una dopo l’altra. Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
   els.mBody.innerHTML = h;
 }
 function renderArithSide() {
