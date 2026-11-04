@@ -1327,60 +1327,128 @@ function memSameProduct(k) {
   return out;
 }
 /* the facts still to work on, in order, for each family */
-function memLadder(keys, inSet, skip) {
+/* ---------- the path for the tabelline ----------
+   1 squares 11²–20² (all of them before moving on) · 2–4 numbers 1, 2, 3 away from a square: m² − 1, m² − 4, m² − 9
+   (9 × 11 = 10² − 1 included) · 5 “rectangles” n × (n+1) = n² + n · 6 their neighbours n(n+1) − 2, n(n+1) − 6
+   7 the easy tables (2, 5, 10, 11, 15, 20) · 8 everything else, by level as before.
+   Steps 1–7 also take facts not yet learned in the standard mode: the first time the answer is shown and written down. */
+var MEM_EASY = { 2: 1, 5: 1, 10: 1, 11: 1, 15: 1, 20: 1 };
+var MEM_PATH = [
+  { id: 1, name: 'Quadrati da 11² a 20²', strict: true },
+  { id: 2, name: 'Distanza 1 da un quadrato (n² − 1)' },
+  { id: 3, name: 'Distanza 2 (n² − 4)' },
+  { id: 4, name: 'Distanza 3 (n² − 9)' },
+  { id: 5, name: 'Rettangoli n × (n+1)' },
+  { id: 6, name: 'Vicini dei rettangoli' },
+  { id: 7, name: 'Tabelline del 2, 5, 10, 11, 15, 20' },
+  { id: 8, name: 'Tutto il resto' }
+];
+function memPathStage(k) {
+  var p = k.split(':'); if (p[0] !== 'm') return 8;
+  var a = +p[1], b = +p[2], lo = Math.min(a, b), hi = Math.max(a, b), df = hi - lo;
+  if (df === 0 && lo >= 11) return 1;
+  if (df % 2 === 0 && df >= 2 && df <= 6 && (lo + hi) / 2 >= 10) return 1 + df / 2;
+  if (df === 1 && lo >= 10) return 5;
+  if ((df === 3 || df === 5) && lo + (df - 1) / 2 >= 10) return 6;
+  if (MEM_EASY[lo] || MEM_EASY[hi]) return 7;
+  return 8;
+}
+/* how to get there from the anchor (shown after a slow or wrong answer) */
+function memPathHint(k) {
+  var p = k.split(':'); if (p[0] !== 'm' && p[0] !== 'd') return null;
+  var a = +p[1], b = +p[2], lo = Math.min(a, b), hi = Math.max(a, b), df = hi - lo, P = a * b, st = memPathStage('m:' + lo + ':' + hi);
+  if (st === 1) { var u = lo - 10; return lo === 20 ? '20² = 2² × 100 = <b>400</b>.' : lo + '² = (' + lo + ' + ' + u + ') × 10 + ' + u + '² = ' + (lo + u) * 10 + ' + ' + u * u + ' = <b>' + P + '</b>.'; }
+  if (st >= 2 && st <= 4) { var m = (lo + hi) / 2, d = df / 2; return lo + ' × ' + hi + ' = ' + m + '² − ' + d * d + ' = ' + m * m + ' − ' + d * d + ' = <b>' + P + '</b>.'; }
+  if (st === 5) return lo + ' × ' + hi + ' = ' + lo + '² + ' + lo + ' = ' + lo * lo + ' + ' + lo + ' = <b>' + P + '</b>.';
+  if (st === 6) { var kk = (df - 1) / 2, n = lo + kk; return lo + ' × ' + hi + ' = ' + n + ' × ' + (n + 1) + ' − ' + kk * (kk + 1) + ' = ' + n * (n + 1) + ' − ' + kk * (kk + 1) + ' = <b>' + P + '</b>.'; }
+  if (st === 7) {
+    var f = [10, 2, 11, 5, 20, 15].filter(function (x) { return x === lo || x === hi; })[0], x = f === lo ? hi : lo;
+    if (f === 10) return x + ' × 10: aggiungi uno zero, <b>' + P + '</b>.';
+    if (f === 2) return 'Il doppio di ' + x + ': <b>' + P + '</b>.';
+    if (f === 5) return 'La metà di ' + x + ' × 10 = ' + x * 10 + ': <b>' + P + '</b>.';
+    if (f === 11) return x + ' × 11 = ' + x + ' × 10 + ' + x + ' = ' + x * 10 + ' + ' + x + ' = <b>' + P + '</b>.';
+    if (f === 20) return 'Il doppio di ' + x + ' × 10 = ' + x * 10 + ': <b>' + P + '</b>.';
+    return x + ' × 15 = ' + x + ' × 10 + la metà = ' + x * 10 + ' + ' + x * 5 + ' = <b>' + P + '</b>.';
+  }
+  return null;
+}
+/* progress of each step over the active multiplications; cur = the first step not done yet */
+function memPathInfo(act) {
+  var st = MEM_PATH.map(function (x) { return { id: x.id, name: x.name, strict: !!x.strict, tot: 0, auto: 0 }; });
+  act.forEach(function (k) { if (k[0] !== 'm') return; var x = st[memPathStage(k) - 1]; x.tot++; if (memStatus(k) === 'auto') x.auto++; });
+  var cur = 8;
+  for (var i = 0; i < 7; i++) { var x = st[i]; if (x.tot && (x.strict ? x.auto < x.tot : x.auto < 0.9 * x.tot)) { cur = x.id; break; } }
+  return { stages: st, cur: cur };
+}
+function memSortKey(k) { return (memFamily(k) === 'tab' ? memPathStage(k) : 0) * 1e7 + memOrder(k); }
+/* facts still to work on for each family: tabelline on the path (steps 1–7 even if not learned yet), the rest only if learned */
+function memLadder(act, inSet, skip) {
   var fams = { tab: [], inv: [], pow: [] };
-  keys.forEach(function (k) {
+  act.forEach(function (k) {
     if (skip && skip(k)) return;
-    var st = memStatus(k); if (st !== 'target' && st !== 'unknown') return;
+    var st = memStatus(k), path = k[0] === 'm' && memPathStage(k) < 8;
+    if (!(st === 'target' || st === 'unknown' || (st === 'none' && path))) return;
+    if (!path && !inSet[k]) return;
     if (!memEligible(k, inSet)) return;
     fams[memFamily(k)].push(k);
   });
-  Object.keys(fams).forEach(function (f) { fams[f].sort(function (a, b) { return memOrder(a) - memOrder(b); }); });
+  Object.keys(fams).forEach(function (f) { fams[f].sort(function (a, b) { return memSortKey(a) - memSortKey(b); }); });
   return fams;
+}
+/* the tabelline open right now: the current step (and stragglers of earlier ones); a step that is not strict lets
+   the next one start when all its remaining facts are already being drilled */
+function memTabPool(list, info) {
+  var pool = list.filter(function (k) { return memPathStage(k) <= info.cur; });
+  if (!pool.length && info.cur < 8 && !MEM_PATH[info.cur - 1].strict && list.length) { var nx = memPathStage(list[0]); pool = list.filter(function (k) { return memPathStage(k) === nx; }); }
+  return pool;
 }
 var MEM_FAM_W = { tab: 0.6, inv: 0.25, pow: 0.15 };
 function memNext() {
-  var keys = learnedKeys(arithKeys());
-  if (!keys.length) return null;
-  var inSet = {}; keys.forEach(function (k) { inSet[k] = 1; });
-  MEM.W = MEM.W.filter(function (k) { return inSet[k] && memStatus(k) !== 'auto'; });
-  MEM.Q = MEM.Q.filter(function (q) { return inSet[q.k]; });
+  var act = arithKeys();
+  if (!act.length) return null;
+  var keys = learnedKeys(act), inSet = {}, actSet = {};
+  keys.forEach(function (k) { inSet[k] = 1; }); act.forEach(function (k) { actSet[k] = 1; });
+  MEM.W = MEM.W.filter(function (k) { return actSet[k] && memStatus(k) !== 'auto'; });
+  MEM.Q = MEM.Q.filter(function (q) { return actSet[q.k]; });
   MEM.n++; MEM.extra = false;
-  var recent = MEM.last.slice(-Math.min(2, keys.length - 1));
+  var recent = MEM.last.slice(-Math.min(2, act.length - 1));
   function free(k) { return recent.indexOf(k) < 0; }
   /* 1. a re-ask that is due */
   function failing(k) { var z = MZ.get(k); return z && z.s === 0 ? 0 : 1; }   /* the ones just calculated or missed keep their promise of coming back soon */
   var due = MEM.Q.filter(function (q) { return q.at <= MEM.n && free(q.k); }).sort(function (a, b) { return failing(a.k) - failing(b.k) || a.at - b.at; })[0];
   if (due) { MEM.Q.splice(MEM.Q.indexOf(due), 1); return due.k; }
   var now = nowMin(), auto = [], dueC = [];
-  keys.forEach(function (k) {
+  act.forEach(function (k) {
     if (!free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0 || memStatus(k) !== 'auto') return;
     auto.push(k); if (memCheckDue(k)) dueC.push(k);
   });
   function over(k) { var z = MZ.get(k); return (now - memDueAt(z)) / (MEM_LONG[Math.min(z.lv || 0, MEM_LONG.length - 1)] * DAY); }
   dueC.sort(function (a, b) { return over(b) - over(a); });
-  var lad = memLadder(keys, inSet, function (k) { return !free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0; });
+  var lad = memLadder(act, inSet, function (k) { return !free(k) || memQueued(k) || MEM.W.indexOf(k) >= 0; });
+  var info = memPathInfo(act);
+  lad.tab = memTabPool(lad.tab, info);
   var fams = Object.keys(lad).filter(function (f) { return lad[f].length; });
   /* 2. every other question, a long-term check that is due */
   if (dueC.length && (MEM.n % 2 === 0 || !fams.length)) return dueC[0];
-  /* 3. the next fact on the ladder of difficulty */
+  /* 3. the next fact on the path / ladder of difficulty */
   if (fams.length) {
     var tot = 0; fams.forEach(function (f) { tot += MEM_FAM_W[f]; });
     var r = Math.random() * tot, fi = 0;
     while (fi < fams.length - 1 && r >= MEM_FAM_W[fams[fi]]) { r -= MEM_FAM_W[fams[fi]]; fi++; }
-    /* not always the very next one: one of the next few of the same level, the earlier ones more likely */
-    var list = lad[fams[fi]], tier = memTier(list[0]);
-    var win = list.filter(function (k) { return memTier(k) === tier; }).slice(0, 6);
+    /* not always the very next one: one of the next few of the same step and level, the earlier ones more likely */
+    var list = lad[fams[fi]], st0 = memSortKey(list[0]) / 1e7 | 0, tier = memTier(list[0]);
+    var same = function (k) { return (memSortKey(k) / 1e7 | 0) === st0 && memTier(k) === tier; };
+    var win = list.filter(same).slice(0, 6);
     if (MEM.W.length >= MEM_WCAP) win = win.filter(function (k) { return memStatus(k) === 'unknown'; });   /* working set full: only checks of facts that should already be automatic */
     var next = null;
     if (win.length) {
       var wts = [0.3, 0.22, 0.17, 0.13, 0.1, 0.08].slice(0, win.length), wt = 0; wts.forEach(function (x) { wt += x; });
       var rr = Math.random() * wt, wi = 0; while (wi < win.length - 1 && rr >= wts[wi]) { rr -= wts[wi]; wi++; }
       next = win[wi];
-    } else if (MEM.W.length >= MEM_WCAP) next = list.filter(function (k) { return memStatus(k) === 'unknown' && memTier(k) <= tier; })[0];
+    } else if (MEM.W.length >= MEM_WCAP) next = list.filter(function (k) { return memStatus(k) === 'unknown' && memSortKey(k) / 1e7 <= st0 + 1; })[0];
     if (next) {
-      if (memStatus(next) === 'target') MEM.W.push(next);
-      memBringSameProduct(next, inSet);
+      if (memStatus(next) !== 'unknown') MEM.W.push(next);
+      memBringSameProduct(next, actSet, inSet);
       return next;
     }
   }
@@ -1391,8 +1459,8 @@ function memNext() {
   /* 5. nothing else to do: the next re-ask, or any learned fact */
   var q = MEM.Q.filter(function (x) { return free(x.k); }).sort(function (a, b) { return a.at - b.at; })[0];
   if (q) { MEM.Q.splice(MEM.Q.indexOf(q), 1); return q.k; }
-  var pool = keys.filter(free);
-  return pick(pool.length ? pool : keys);
+  var pool = (keys.length ? keys : act).filter(free);
+  return pick(pool.length ? pool : act);
 }
 /* tabelline easy to swap: 16 × 7 and 17 × 6 (the units of the teen number and the one-digit number swapped, up to 2 apart).
    Same last digit, and they differ by 10 × the gap between the one-digit numbers. */
@@ -1412,14 +1480,18 @@ function memContrast(k, other) {
   return '<b>' + memPlainOf(k) + '</b> · <b>' + memPlainOf(other) + '</b>: stessa cifra finale, differiscono di ' + Math.abs(P - Q) + '. È più grande quella col numero a una cifra più grande (' + big + ').';
 }
 /* when a multiplication comes up for the first time, the ones with the same result follow right after */
-function memBringSameProduct(k, inSet) {
+function memBringSameProduct(k, actSet, inSet) {
   if (k[0] !== 'm') return;
+  var kst = memPathStage(k);
   var p = k.split(':'), fk = +p[1] * +p[2];
   if (MEM.sp[fk] || Math.random() < 0.4) return;   /* about half the time, and once per result in a session */
   MEM.sp[fk] = 1;
   var tier = memTier(k), gap = 1 + Math.floor(Math.random() * 3);
   memSameProduct(k).forEach(function (pr) {
-    var cands = ['m:' + pr[0] + ':' + pr[1], 'm:' + pr[1] + ':' + pr[0]].filter(function (x) { return inSet[x] && memTier(x) <= tier; });
+    var cands = ['m:' + pr[0] + ':' + pr[1], 'm:' + pr[1] + ':' + pr[0]].filter(function (x) {
+      var xs = memPathStage(x);
+      return actSet[x] && (xs < 8 ? xs <= kst : inSet[x] && kst === 8 && memTier(x) <= tier);
+    });
     if (!cands.length) return;
     var pk = cands.filter(function (x) { return memStatus(x) !== 'auto'; })[0] || cands[0];
     if (memQueued(pk) || MEM.W.indexOf(pk) >= 0) return;
@@ -1449,7 +1521,7 @@ function memAnswer(k, ok, ms, timeout) {
     var p = k.split(':');   /* 7 × 8 slow: 8 × 7 comes back too, a bit later */
     if (p[0] === 'm' && p[1] !== p[2]) {
       var tw = 'm:' + p[2] + ':' + p[1], tws = STATE.a.get(tw);
-      if (tws && tws.s === -1 && arithKeys().indexOf(tw) >= 0 && !memQueued(tw) && memStatus(tw) !== 'auto') { memQueue(tw, 3 + Math.floor(Math.random() * 3)); if (MEM.W.indexOf(tw) < 0) MEM.W.push(tw); }
+      if ((tws && tws.s === -1 || memPathStage(tw) < 8) && arithKeys().indexOf(tw) >= 0 && !memQueued(tw) && memStatus(tw) !== 'auto') { memQueue(tw, 3 + Math.floor(Math.random() * 3)); if (MEM.W.indexOf(tw) < 0) MEM.W.push(tw); }
     }
   } else if (z.s >= MEM_FIX) {
     MEM.W = MEM.W.filter(function (x) { return x !== k; });
@@ -1479,8 +1551,8 @@ function memAnswer(k, ok, ms, timeout) {
   return out;
 }
 function memLevel(k) {
-  var o = STATE.a.get(k); if (!o || o.s !== -1) return 0;
-  var st = memStatus(k), z = MZ.get(k);
+  var o = STATE.a.get(k), z = MZ.get(k); if (!(z && z.n) && (!o || o.s !== -1)) return 0;
+  var st = memStatus(k);
   if (st === 'auto') return memCheckDue(k) ? 3 : 4;
   if (z && z.n && z.s > 0) return 2;
   return st === 'target' ? 1 : 3;
@@ -1545,7 +1617,7 @@ function nextQuestion() {
       els.banner.hidden = false;
     }
     var mc = makeArithCard(mk), thr = memThr(mk);
-    mc.mem = { thr: thr, limit: memLimit(thr) };
+    mc.mem = { thr: thr, limit: memLimit(thr), intro: memStatus(mk) === 'none' && !MZ.get(mk) };
     cur.a = { card: mc, start: performance.now(), answered: false, mem: true };
     showCard(cur.a);
     return;
@@ -1580,6 +1652,13 @@ function showCard(c) {
   els.qUnit.textContent = card.unit || '';
   els.fb.hidden = true; els.fb.innerHTML = '';
   els.hint.textContent = c.mem ? 'Rispondi solo se la sai a memoria, prima della tacca' : HINT_TXT[card.mode]; els.hint.classList.remove('warn');
+  if (c.mem && card.mem.intro) {   /* a fact never seen: show it, with the way to get there, and have it written down */
+    els.qBadge.textContent = 'Nuova'; els.qBadge.className = 'badge new';
+    els.memBar.hidden = true;
+    var ph = memPathHint(card.key);
+    els.qPrompt.innerHTML = 'Da imparare: <b>' + esc(card.plain) + '</b>' + (ph ? '<br><span style="font-size:.88rem">' + ph + '</span>' : '');
+    els.hint.textContent = 'Guardala bene e scrivi il risultato';
+  }
   els.btnDunno.hidden = false;
   document.getElementById('btnTable').hidden = tab !== 'p';
   els.btnGo.textContent = 'Invia'; els.padEnter.textContent = 'Invia';
@@ -1651,11 +1730,32 @@ function submit(dunno, mcIndex, timeout) {
 }
 function memSubmit(c, res, ms) {
   var card = c.card, k = card.key, now = nowMin();
+  if (card.mem.intro) {
+    if (res.dunno || res.timeout) { MEM.last.push(k); advance(); return; }
+    if (!res.ok) { flashHint('Scrivi il risultato mostrato sopra: ' + card.answerHTML.replace(/<[^>]+>/g, '') + '.'); return; }
+    MZ.set(k, { s: 0, n: 1, f: 0, b: ms, t: card.mem.limit, d: now, h: 0, lv: 0, due: 0 });
+    if (MEM.W.indexOf(k) < 0) MEM.W.push(k);
+    memQueue(k, MEM_GAPS[0]);
+    if (!STATE.a.get(k)) STATE.a.set(k, schedule(undefined, 1, now, ms));
+    MEM.seen[k] = 1; MEM.last.push(k); if (MEM.last.length > 6) MEM.last.shift();
+    c.answered = true; c.res = res; c.ms = ms; c.mr = { intro: true };
+    Store.mark('a'); Store.mark('m');
+    els.card.classList.add('is-ok'); els.btnDunno.hidden = true; els.ans.readOnly = true; els.hint.textContent = '';
+    var ph = memPathHint(k);
+    els.fb.innerHTML = '<div class="verdict g2"><strong>Nuova</strong></div><div class="fact">' + memFactHTML(card) + '</div>' + (ph ? '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + ph + '</p></div>' : '') +
+      '<div class="fb-actions" style="justify-content:space-between;align-items:center;gap:10px"><span class="next">Torna tra 2 domande: prova a ricordarla senza guardare.</span>' + (settings.auto ? '' : '<button type="button" class="btn primary small" id="btnNext">Avanti ↵</button>') + '</div>';
+    els.fb.hidden = false; els.btnGo.textContent = 'Avanti'; els.padEnter.textContent = 'Avanti';
+    var bn = document.getElementById('btnNext'); if (bn) bn.addEventListener('click', advance);
+    if (settings.auto) autoTimer = setTimeout(advance, 1600);
+    renderAll();
+    return;
+  }
   /* the first time a fact shows up in a session it also counts as its standard review, if one is due */
   if (!MEM.seen[k] && !res.timeout) {
     MEM.seen[k] = 1;
     var so = STATE.a.get(k);
     if (so && so.d <= now) { STATE.a.set(k, schedule(so, gradeOf(card, !!res.ok, ms, settings.a.speed), now, ms)); }
+    else if (!so) STATE.a.set(k, schedule(undefined, gradeOf(card, !!res.ok, ms, settings.a.speed), now, ms));
   }
   var cf = memConfusable(k);
   if (cf && !res.ok && res.shown) { var cq = cf.split(':'); if (+String(res.shown).replace(/\D/g, '') === +cq[1] * +cq[2]) res.confused = cf; }
@@ -1697,7 +1797,7 @@ function showMemFeedback(c) {
   else msg = back + (settings.a.memCopy ? 'Riscrivila qui sopra per fissarla. ' : '') + 'Torna tra ' + mr.gap + ' domande.';
   var tips = '';
   if (cfk && (!mr.fast || res.confused || c.trapOf)) tips += '<div class="tipbox"><span class="lab">Da non confondere</span><p>' + memContrast(card.key, cfk) + '</p></div>';
-  else if (!mr.fast && card.hints && card.hints.length) tips += '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + card.hints[0] + '</p></div>';
+  else if (!mr.fast && (memPathHint(card.key) || card.hints && card.hints.length)) tips += '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + (memPathHint(card.key) || card.hints[0]) + '</p></div>';
   if (trapTxt) msg = trapTxt + ' ' + msg;
   if (res.confused) msg = 'Le due tornano a breve una vicina all’altra. ' + msg;
   var needBtn = !(mr.fast && settings.auto);
@@ -1817,7 +1917,7 @@ setInterval(function () {
   if (!(c && c.card && !c.answered && !els.qView.hidden)) return;
   var el = performance.now() - c.start;
   els.qTime.textContent = (el / 1000).toFixed(1) + ' s';
-  if (c.mem) {
+  if (c.mem && !c.card.mem.intro) {
     els.memFill.style.width = Math.min(100, el / c.card.mem.limit * 100).toFixed(1) + '%';
     els.memBar.classList.toggle('late', el > c.card.mem.thr);
     if (settings.a.memReveal && el >= c.card.mem.limit) submit(false, undefined, true);
@@ -1898,21 +1998,20 @@ function renderMemPanel() {
     h += '<h3>In questo giro</h3><div class="mwork">' + MEM.W.map(function (k) { var z = MZ.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + memDots(z ? z.s : 0) + (z && z.n ? ' · ' + fmtSec(z.t) : '') + '</span></div>'; }).join('') + '</div>';
   }
   var inSet = {}; keys.forEach(function (k) { inSet[k] = 1; });
-  var tiers = {}; keys.forEach(function (k) {
-    if (memFamily(k) !== 'tab') return;
-    var t = memTier(k), x = tiers[t] || (tiers[t] = { m: [0, 0], d: [0, 0] }), c = x[k[0]];
-    c[1]++; if (memStatus(k) === 'auto') c[0]++;
-  });
-  if (Object.keys(tiers).length) {
-    h += '<h3>Tabelline per livello</h3><div class="tw"><table><thead><tr><th>Livello</th><th>× a memoria</th><th>÷ a memoria</th></tr></thead><tbody>' + Object.keys(tiers).sort().map(function (t) {
-      var x = tiers[t]; return '<tr><td>' + MEM_TIER_NAME[t] + '</td><td>' + (x.m[1] ? x.m[0] + '/' + x.m[1] : '–') + '</td><td>' + (x.d[1] ? x.d[0] + '/' + x.d[1] : '–') + '</td></tr>';
-    }).join('') + '</tbody></table></div><p class="note" style="margin:6px 0 0">Una divisione arriva quando la sua moltiplicazione è a memoria.</p>';
+  var act = arithKeys(), info = memPathInfo(act), dv = [0, 0];
+  act.forEach(function (k) { if (k[0] === 'd' && inSet[k]) { dv[1]++; if (memStatus(k) === 'auto') dv[0]++; } });
+  if (info.stages.some(function (x) { return x.tot; })) {
+    h += '<h3>Percorso delle tabelline</h3><div class="tw"><table><thead><tr><th>Tappa</th><th>× a memoria</th></tr></thead><tbody>' + info.stages.filter(function (x) { return x.tot; }).map(function (x) {
+      var mark = x.id < info.cur ? '✓ ' : x.id === info.cur ? '▸ ' : '';
+      return '<tr' + (x.id === info.cur ? ' style="font-weight:600"' : '') + '><td>' + mark + esc(x.name) + '</td><td>' + x.auto + '/' + x.tot + '</td></tr>';
+    }).join('') + (dv[1] ? '<tr><td>Divisioni</td><td>' + dv[0] + '/' + dv[1] + '</td></tr>' : '') + '</tbody></table></div><p class="note" style="margin:6px 0 0">I quadrati vanno saputi tutti prima di andare avanti; le altre tappe si chiudono al 90%. Le divisioni arrivano quando la loro moltiplicazione è a memoria.</p>';
   }
-  var lad = memLadder(keys, inSet, function (k) { return MEM.W.indexOf(k) >= 0 || memQueued(k); }).tab.slice(0, 6);
-  if (lad.length) h += '<h3>Le prossime, in ordine</h3><div class="mwork">' + lad.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k); return '<div><span>' + esc(c.plain) + '</span><span>' + (memStatus(k) === 'unknown' ? 'da verificare' : fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')') + '</span></div>'; }).join('') + '</div>';
-  var back = Object.keys(MEM.g).filter(function (k) { return memQueued(k); });
-  if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.map(function (k) { var c = makeArithCard(k), q = MEM.Q.filter(function (x) { return x.k === k; })[0]; return '<div><span>' + esc(c.plain) + '</span><span>tra ' + plural(Math.max(1, q.at - MEM.n - 1), 'domanda', 'domande') + '</span></div>'; }).join('') + '</div>';
-  h += '<p class="note" style="margin:12px 0 0">Si parte dalle tabelline entro 10 × 10, poi quelle con un numero da 11 a 20, poi quelle con tutti e due; le tabelline con lo stesso risultato ogni tanto arrivano vicine. Quelle facili da scambiare, come 16 × 7 e 17 × 6, dopo un paio di risposte veloci arrivano a tradimento una dopo l’altra. Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
+  var ladAll = memLadder(act, inSet, function (k) { return MEM.W.indexOf(k) >= 0 || memQueued(k); });
+  var lad = memTabPool(ladAll.tab, info).slice(0, 6);
+  if (lad.length) h += '<h3>Le prossime, in ordine</h3><div class="mwork">' + lad.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k), stt = memStatus(k); return '<div><span>' + esc(c.plain) + '</span><span>' + (stt === 'unknown' ? 'da verificare' : stt === 'none' && !(z && z.n) ? 'nuova' : fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')') + '</span></div>'; }).join('') + '</div>';
+  var back = Object.keys(MEM.g).map(function (k) { return MEM.Q.filter(function (x) { return x.k === k; })[0]; }).filter(Boolean).sort(function (x, y) { return x.at - y.at; });
+  if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.slice(0, 6).map(function (q) { var c = makeArithCard(q.k); return '<div><span>' + esc(c.plain) + '</span><span>tra ' + plural(Math.max(1, q.at - MEM.n - 1), 'domanda', 'domande') + '</span></div>'; }).join('') + (back.length > 6 ? '<div><span class="note" style="margin:0">e altre ' + (back.length - 6) + '</span><span></span></div>' : '') + '</div>';
+  h += '<p class="note" style="margin:12px 0 0">Il percorso parte dai quadrati, poi le tabelline a distanza 1, 2 e 3 da un quadrato (14 × 16 = 15² − 1), i rettangoli (15 × 16 = 15² + 15) e i loro vicini, le tabelline facili, e infine tutto il resto; le tabelline con lo stesso risultato ogni tanto arrivano vicine. Quelle facili da scambiare, come 16 × 7 e 17 × 6, dopo un paio di risposte veloci arrivano a tradimento una dopo l’altra. Una risposta è a memoria se arriva prima della tacca sulla barra. Quelle calcolate o sbagliate tornano dopo 2, poi 4, poi 8 domande. Dopo 3 risposte in tempo di fila sono fissate, ma tornano ancora: in questa sessione dopo 16, 32, 64 domande, e nei giorni seguenti dopo 2, 6, 15, 40 giorni e oltre. Se una volta la calcoli o la sbagli, torna da fissare.</p>';
   els.mBody.innerHTML = h;
 }
 function renderArithSide() {
