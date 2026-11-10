@@ -347,12 +347,29 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .sdots i.h { background: var(--lv2); }
 .sdots i.f { background: var(--lv4); }
 .streak .sel { height: 30px; font-size: .78rem; font-weight: 500; padding-left: 9px; background-position: calc(100% - 15px) 12px, calc(100% - 10px) 12px; }
+.xgrid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.xgrid.w5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.xgrid .ic { padding: 7px 2px; }
+.xgrid .ic small { font-size: .62rem; }
+.xgrid .ic b sup { font-size: .72em; line-height: 0; }
 /* four tabs, practice choice */
 .tabs button .tl-s { display: none; }
 .sel { height: 36px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: .88rem; font-weight: 600; padding: 0 30px 0 11px; min-width: 0; max-width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px; background-size: 5px 5px; background-repeat: no-repeat; }
 .focusbar { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; }
-.focusbar label { font-size: .86rem; font-weight: 600; }
+.focusbar .flab { font-size: .86rem; font-weight: 600; }
+.fbtn { text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fpick { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.fpick .set-h { margin: 4px 0 0; }
+.fhint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+.fgroups { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.fgroups button { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 9px; padding: 7px 10px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 1px; }
+.fgroups button b { font-size: .86rem; font-weight: 600; }
+.fgroups button small { font-size: .72rem; color: var(--muted); font-family: var(--f-mono); }
+.fgroups button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.fgroups button[aria-pressed="true"] small { color: inherit; opacity: .75; }
+.fpick .quick button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.fpick-f { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px; }
 .tgrid .thb { border: 0; background: transparent; padding: 0; cursor: pointer; border-radius: 3px; color: var(--muted); }
 .tgrid .thb.on { background: var(--ink); color: var(--on-ink); opacity: 1; text-decoration: none; }
 .tc.nf { opacity: .14; }
@@ -495,9 +512,17 @@ details.set[open] summary::after { transform: rotate(-135deg); }
         <span class="modenote" id="modeNote"></span>
       </div>
       <div class="focusbar" id="focusBar" hidden>
-        <label for="tFocus">Allena</label>
-        <select id="tFocus" class="sel"></select>
+        <span class="flab">Allena</span>
+        <button type="button" class="sel fbtn" id="tFocus" aria-expanded="false" aria-controls="focusPick"></button>
         <span class="modenote" id="focusNote"></span>
+      </div>
+      <div class="fpick" id="focusPick" hidden>
+        <div class="quick"><button type="button" data-f="all" id="fAll">Tutte le tabelline</button></div>
+        <p class="set-h">Il percorso <span class="fhint">puoi sceglierne più di uno, per esempio le tre distanze insieme</span></p>
+        <div class="fgroups" id="fGroups"></div>
+        <p class="set-h">Tabelline <span class="fhint">una o più</span></p>
+        <div class="nchips" id="fTables"></div>
+        <div class="fpick-f"><span class="modenote" id="fPickNote"></span><button type="button" class="btn small primary" id="fDone">Fatto</button></div>
       </div>
       <div class="modebar" id="kModeBar" hidden>
         <div class="seg" id="kModeSeg" role="group" aria-label="Cosa allenare"><button type="button" data-m="let">Lettere</button><button type="button" data-m="word">Parole</button><button type="button" data-m="msg">Messaggi</button></div>
@@ -576,18 +601,19 @@ details.set[open] summary::after { transform: rotate(-135deg); }
           <h2>Mappa delle tabelline</h2>
           <div class="legend" id="tLegend"></div>
           <div class="mapwrap"><div class="tgrid" id="tGrid"></div></div>
-          <p class="detail" id="tDetail">Tocca una casella per vedere come va quella tabellina, oppure un numero nella colonna a sinistra per allenare solo la sua tabellina.</p>
+          <p class="detail" id="tDetail">Tocca una casella per vedere come va quella tabellina, oppure un numero nella colonna a sinistra per aggiungere o togliere la sua tabellina da quelle che alleni.</p>
         </section>
 
         <section class="panel" id="vMapPanel" aria-label="Mappa di inverse e potenze" hidden>
           <h2>Mappa</h2>
           <div class="legend" id="vLegend"></div>
-          <h3>Inverse 1/x</h3>
+          <h3 id="iGridH">Inverse 1/x</h3>
           <div class="mapwrap"><div class="igrid" id="iGrid"></div></div>
           <p class="detail" id="iDetail">Tocca un numero per vedere il valore e il trucco per ricordarlo.</p>
-          <h3>Potenze di 2</h3>
+          <h3 id="wGridH">Potenze di 2</h3>
           <div class="mapwrap"><div class="igrid pgrid" id="wGrid"></div></div>
           <p class="detail" id="wDetail">Tocca una potenza per vedere il valore e come ricordarla.</p>
+          <div id="xGrids"></div>
         </section>
 
         <details class="panel set" id="setA">
@@ -619,13 +645,19 @@ details.set[open] summary::after { transform: rotate(-135deg); }
         </details>
 
         <details class="panel set" id="setV" hidden>
-          <summary>Impostazioni inverse e potenze</summary>
+          <summary>Impostazioni: esercizi e valori</summary>
           <div class="set-body">
             <p class="set-h">Esercizi</p>
             <label class="check" for="aInv"><input type="checkbox" id="aInv"> Inverse: 1/15 = ? %</label>
             <label class="check" for="aInvr"><input type="checkbox" id="aInvr"> <span>Inverse al contrario: 1/6.<span class="ov">6</span>% = ?</span></label>
             <label class="check" for="aPow"><input type="checkbox" id="aPow"> <span>Potenze di 2: 2<sup>5</sup> = ?</span></label>
             <label class="check" for="aPowr"><input type="checkbox" id="aPowr"> <span>Potenze di 2 al contrario: 32 = 2<sup>?</sup></span></label>
+            <label class="check" for="aRad"><input type="checkbox" id="aRad"> Radici quadrate: √2 = ?, fino a √52, √252, √365</label>
+            <label class="check" for="aRadr"><input type="checkbox" id="aRadr"> Radici al contrario: √? = 1.41</label>
+            <label class="check" for="aFrac"><input type="checkbox" id="aFrac"> Frazioni in percentuale: 3/8 = ? %</label>
+            <label class="check" for="aPot"><input type="checkbox" id="aPot"> <span>Quadrati da 21 a 31 e cubi fino a 10: 25<sup>2</sup> = ?, 9<sup>3</sup> = ?</span></label>
+            <label class="check" for="aPotr"><input type="checkbox" id="aPotr"> <span>Quadrati e cubi al contrario: 625 = ?<sup>2</sup></span></label>
+            <label class="check" for="aNor"><input type="checkbox" id="aNor"> Distribuzione normale: entro ±1σ = ? %, oltre +2σ = ? %, coda del 5% = ? σ</label>
             <p class="set-h">Inverse: valori di x</p>
             <div class="nchips" id="aInvs"></div>
             <div class="quick" id="aInvsQuick"><button type="button" data-q="all">Tutti</button><button type="button" data-q="none">Nessuno</button><button type="button" data-q="low">1–20</button><button type="button" data-q="high">21–40</button></div>
@@ -1058,9 +1090,10 @@ function levelOfKey(k) { var t = k.slice(0, k.indexOf(':')); return { p1: 1, p2:
 /* ================= cards ================= */
 var KIND_LABEL = { mul: 'Moltiplicazioni', div: 'Divisioni', inv: 'Inverse 1/x', invr: 'Inverse al contrario', pow: 'Potenze di 2', powr: 'Potenze al contrario',
   p1: 'Consonanti → cifra', p2: 'Sillabe → cifre', p2m: 'Cifra → suoni', p3: 'Parola → numero', p4: 'Numero → parola', p5: 'Parola lunga → numero', p6: 'Numero lungo → parole',
+  rad: 'Radici quadrate', radr: 'Radici al contrario', frac: 'Frazioni in %', pot: 'Quadrati e cubi', potr: 'Quadrati e cubi al contrario', nor: 'Distribuzione normale',
   kr: 'Ascoltare lettere', ks: 'Trasmettere lettere', kwr: 'Ascoltare parole', kws: 'Trasmettere parole', kmr: 'Ascoltare messaggi', kms: 'Trasmettere messaggi' };
-var KIND_ORDER = { t: ['mul', 'div'], v: ['inv', 'invr', 'pow', 'powr'], p: ['p1', 'p2', 'p2m', 'p3', 'p4', 'p5', 'p6'], k: ['kr', 'ks', 'kwr', 'kws', 'kmr', 'kms'] };
-var BASE_FAST = { mul: 2500, div: 3000, inv: 3500, invr: 3000, pow: 2500, powr: 2500, p1: 2000, p2: 2500, p2m: 3000, kr: 1500 };
+var KIND_ORDER = { t: ['mul', 'div'], v: ['inv', 'invr', 'pow', 'powr', 'rad', 'radr', 'frac', 'pot', 'potr', 'nor'], p: ['p1', 'p2', 'p2m', 'p3', 'p4', 'p5', 'p6'], k: ['kr', 'ks', 'kwr', 'kws', 'kmr', 'kms'] };
+var BASE_FAST = { mul: 2500, div: 3000, inv: 3500, invr: 3000, pow: 2500, powr: 2500, p1: 2000, p2: 2500, p2m: 3000, kr: 1500, rad: 3500, radr: 3500, frac: 3500, pot: 4000, potr: 3500, nor: 3500 };
 
 function checkExact(raw, ans) { var v = parseNum(raw); if (isNaN(v)) return null; return { ok: Math.abs(v - ans) < 1e-9, shown: trimZ(String(v)) }; }
 function checkInv(raw, x) {
@@ -1089,6 +1122,98 @@ function checkDigits(raw, ans) {
   return { ok: s === ans, shown: s };
 }
 
+/* ================= more facts for the "inverse e potenze" tab: square roots, fractions, squares and cubes, normal distribution =================
+   keys: s:N √N · q:N √? = value · f:n:d n/d in % · x:N N² · y:N value = ?² · c:N N³ · b:N value = ?³ · n:i a fact of the normal distribution */
+var XF = { s: 'rad', q: 'rad', f: 'frac', x: 'sqc', y: 'sqc', c: 'sqc', b: 'sqc', n: 'nor' };
+var XREV = { q: 's', y: 'x', b: 'c' };
+var X_ROOTS = [2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 24, 30, 40, 50, 52, 60, 70, 80, 90, 200, 252, 365];
+var X_FRACS = (function () {
+  var out = [];
+  [3, 4, 5, 6, 7, 8, 9, 11, 12].forEach(function (d) {
+    for (var n = 2; n < d; n++) { var a = n, b = d; while (b) { var t = a % b; a = b; b = t; } if (a === 1) out.push([n, d]); }
+  });
+  return out;
+})();
+var X_NORM = [
+  { t: 'in', s: 0.5, v: 38.29, a: '38.3' }, { t: 'in', s: 1, v: 68.27, a: '68.3' }, { t: 'in', s: 1.5, v: 86.64, a: '86.6' }, { t: 'in', s: 2, v: 95.45, a: '95.4' }, { t: 'in', s: 3, v: 99.73, a: '99.7' },
+  { t: 'out', s: 0.5, v: 30.85, a: '30.9' }, { t: 'out', s: 1, v: 15.87, a: '15.9' }, { t: 'out', s: 1.5, v: 6.68, a: '6.7' }, { t: 'out', s: 2, v: 2.28, a: '2.3' }, { t: 'out', s: 3, v: 0.135, a: '0.13' },
+  { t: 'z', p: 25, v: 0.6745, a: '0.67' }, { t: 'z', p: 10, v: 1.2816, a: '1.28' }, { t: 'z', p: 5, v: 1.6449, a: '1.64' }, { t: 'z', p: 2.5, v: 1.96, a: '1.96' }, { t: 'z', p: 1, v: 2.3263, a: '2.33' }
+];
+var X_ROOT_NOTE = { 2: 'La diagonale del quadrato: <b>1.41</b>.', 3: '<b>1.73</b>.', 5: '<b>2.24</b>.', 10: '<b>3.16</b>.',
+  12: 'I mesi in un anno: vol annua / 3.46 = vol mensile.', 52: 'Le settimane in un anno: vol annua / 7.2 = vol settimanale.',
+  252: 'I giorni di borsa in un anno: vol annua / 16 = vol giornaliera.', 365: 'I giorni di calendario in un anno.' };
+function rootHints(N) {
+  var out = [], k = Math.floor(Math.sqrt(N)), s = 1;
+  if (X_ROOT_NOTE[N]) out.push(X_ROOT_NOTE[N]);
+  for (var j = 2; j * j <= N; j++) if (N % (j * j) === 0) s = j;
+  if (s > 1) out.push('√' + N + ' = ' + s + ' × √' + (N / (s * s)) + ' = ' + s + ' × ' + sig3(Math.sqrt(N / (s * s))) + ' = <b>' + sig3(Math.sqrt(N)) + '</b>.');
+  out.push(k + '² = ' + k * k + ' e ' + (k + 1) + '² = ' + (k + 1) * (k + 1) + ': √' + N + ' sta tra ' + k + ' e ' + (k + 1) + ', ed è <b>' + sig3(Math.sqrt(N)) + '</b>.');
+  return out.slice(0, 2);
+}
+function fracHints(n, d) {
+  var v = sig3(100 * n / d), one = invShort(d).html, out = [n + '/' + d + ' = ' + n + ' × 1/' + d + ' = ' + n + ' × ' + one + '% = <b>' + v + '%</b>.'];
+  if (d === 7) out.push('Con il 7 girano sempre le stesse cifre, 142857: cambia solo da dove parti.');
+  if (d === 9) out.push('Con il 9 la cifra si ripete: ' + n + '/9 = 0.' + n + n + n + '…');
+  if (d === 11) out.push('Con l’11 si ripete ' + n + ' × 9 = ' + (n * 9 < 10 ? '0' : '') + n * 9 + ': 0.' + (n * 9 < 10 ? '0' : '') + n * 9 + (n * 9 < 10 ? '0' : '') + n * 9 + '…');
+  if (n > d / 2 && d !== 7 && d !== 9 && d !== 11) out.push('Oppure dal 100%: 1 − ' + (d - n) + '/' + d + ' = 100 − ' + sig3(100 * (d - n) / d) + ' = <b>' + v + '%</b>.');
+  return out;
+}
+function sqcHints(a, cube) {
+  if (cube) return [a + '³ = ' + a + ' × ' + a + '² = ' + a + ' × ' + a * a + ' = <b>' + a * a * a + '</b>.'];
+  var out = [];
+  if (a % 10 === 5) out.push('Finisce per 5: ' + (a - 5) / 10 + ' × ' + ((a - 5) / 10 + 1) + ' = ' + (a - 5) / 10 * ((a - 5) / 10 + 1) + ', poi 25 → <b>' + a * a + '</b>.');
+  var r = Math.round(a / 10) * 10, k = a - r;
+  if (k) out.push('(' + r + (k > 0 ? ' + ' : ' − ') + Math.abs(k) + ')² = ' + r * r + (k > 0 ? ' + ' : ' − ') + 2 * r * Math.abs(k) + ' + ' + k * k + ' = <b>' + a * a + '</b>.');
+  else out.push(a / 10 + '² = ' + a * a / 100 + ', poi due zeri: <b>' + a * a + '</b>.');
+  return out.slice(0, 2);
+}
+function normLabel(f) { return f.t === 'in' ? 'entro ±' + f.s + 'σ' : f.t === 'out' ? 'oltre +' + f.s + 'σ' : 'coda del ' + f.p + '%'; }
+function normHints(f) {
+  if (f.t === 'in') return ['La regola 68 – 95 – 99.7: entro ±1σ, ±2σ, ±3σ. Entro ±' + f.s + 'σ c’è il <b>' + f.a + '%</b>.'];
+  if (f.t === 'out') { var w = X_NORM.filter(function (x) { return x.t === 'in' && x.s === f.s; })[0]; return ['È metà di quello che resta fuori da ±' + f.s + 'σ: (100 − ' + w.a + ') / 2 = <b>' + f.a + '%</b>.']; }
+  return ['Per lasciare fuori il ' + f.p + '% da un lato servono <b>' + f.a + 'σ</b>.' + (f.p === 2.5 ? ' È il famoso 1.96 dell’intervallo al 95%.' : f.p === 5 ? ' Oltre 1.64σ da tutti e due i lati resta fuori il 10%.' : '')];
+}
+/* an approximate answer is right when it agrees to about 3 significant digits (the tolerance is on the true value) */
+function checkApprox(raw, t, pct, tol) {
+  var v = parseNum(raw); if (isNaN(v)) return null;
+  tol = (tol || 0.6 * Math.pow(10, Math.floor(Math.log10(t)) - 2)) + 1e-9;
+  return { ok: (pct ? [v, v * 100] : [v]).some(function (c) { return Math.abs(c - t) <= tol; }), shown: trimZ(String(v)) + (pct && v >= 1 ? '%' : '') };
+}
+function makeExtraCard(t, a, b) {
+  var c, v, big = function (x) { return '<span class="big">' + x + '</span>'; }, OP = function (x) { return '<span class="op">' + x + '</span>'; };
+  if (t === 's') {
+    v = Math.sqrt(a);
+    c = { kind: 'rad', fact: 'rad' + a, tag: 'Radici quadrate', qHTML: '√' + a, prompt: 'Quanto vale? Bastano 3 cifre.', mode: 'num', unit: '', answerHTML: sig3(v), plain: '√' + a + ' = ' + sig3(v), hints: rootHints(a) };
+    c.check = function (raw) { return checkApprox(raw, v, false); };
+  } else if (t === 'q') {
+    v = sig3(Math.sqrt(a));
+    c = { kind: 'radr', fact: 'rad' + a, tag: 'Radici · al contrario', qHTML: big('√?' + OP('=') + v), prompt: 'Di quale numero intero è la radice quadrata?', mode: 'num', unit: '', answerHTML: String(a), plain: v + ' = √' + a,
+      hints: [v + '² ≈ <b>' + a + '</b>.'].concat(rootHints(a).slice(0, 1)) };
+    c.check = function (raw) { return checkExact(raw, a); };
+  } else if (t === 'f') {
+    v = 100 * a / b;
+    c = { kind: 'frac', fact: 'frac' + a + '/' + b, tag: 'Frazioni in %', qHTML: a + OP('/') + b, prompt: 'Quanto vale in percentuale? Bastano 3 cifre.', mode: 'num', unit: '%', answerHTML: sig3(v) + '%', plain: a + '/' + b + ' = ' + sig3(v) + '%', hints: fracHints(a, b) };
+    c.check = function (raw) { return checkApprox(raw, v, true); };
+  } else if (t === 'x' || t === 'c') {
+    var cube = t === 'c'; v = cube ? a * a * a : a * a;
+    c = { kind: 'pot', fact: (cube ? 'cub' : 'sq') + a, tag: cube ? 'Cubi' : 'Quadrati oltre 20', qHTML: a + '<sup>' + (cube ? 3 : 2) + '</sup>', prompt: 'Quanto fa?', mode: 'num', unit: '', answerHTML: String(v), plain: a + (cube ? '³' : '²') + ' = ' + v, hints: sqcHints(a, cube) };
+    c.check = function (raw) { return checkExact(raw, v); };
+  } else if (t === 'y' || t === 'b') {
+    var cb = t === 'b'; v = cb ? a * a * a : a * a;
+    c = { kind: 'potr', fact: (cb ? 'cub' : 'sq') + a, tag: (cb ? 'Cubi' : 'Quadrati') + ' · al contrario', qHTML: big(v + OP('=') + '?<sup>' + (cb ? 3 : 2) + '</sup>'), prompt: cb ? 'Di quale numero è il cubo?' : 'Di quale numero è il quadrato?', mode: 'num', unit: '',
+      answerHTML: String(a), plain: v + ' = ' + a + (cb ? '³' : '²'), hints: sqcHints(a, cb) };
+    c.check = function (raw) { return checkExact(raw, a); };
+  } else {
+    var f = X_NORM[a];
+    c = { kind: 'nor', fact: 'nor' + a, tag: 'Distribuzione normale', mode: 'num', hints: normHints(f) };
+    if (f.t === 'z') { c.qHTML = big('coda ' + f.p + '%'); c.prompt = 'A quanti σ dalla media resta fuori il ' + f.p + '%, da un solo lato?'; c.unit = 'σ'; c.answerHTML = f.a + 'σ'; c.plain = 'coda del ' + f.p + '% = ' + f.a + 'σ'; }
+    else { c.qHTML = big((f.t === 'in' ? '±' : '&gt; ') + f.s + 'σ'); c.prompt = f.t === 'in' ? 'Che probabilità c’è di restare entro ±' + f.s + 'σ dalla media?' : 'Che probabilità c’è di finire oltre +' + f.s + 'σ, da un solo lato?'; c.unit = '%'; c.answerHTML = f.a + '%'; c.plain = normLabel(f) + ' = ' + f.a + '%'; }
+    /* the usual round figures count: 68, 95, 16 (but 99.7 and the small tails need their decimals) */
+    var tl = f.t === 'z' ? 0.006 : f.v >= 99 ? 0.1 : f.v >= 10 ? 0.5 : f.v >= 1 ? 0.06 : 0.006;
+    c.check = function (raw) { var r = checkApprox(raw, f.v, false, tl); if (r && f.t === 'z') r.shown = r.shown.replace('%', ''); return r; };
+  }
+  return c;
+}
 function makeArithCard(key) {
   var parts = key.split(':'), t = parts[0], a = +parts[1], b = +parts[2], c;
   if (t === 'm') {
@@ -1099,6 +1224,10 @@ function makeArithCard(key) {
     var p = a * b;
     c = { kind: 'div', fact: Math.min(a, b) + 'x' + Math.max(a, b), tag: 'Tabelline · ÷', qHTML: p + '<span class="op">÷</span>' + b, prompt: 'Quanto fa?', mode: 'num', unit: '',
       answerHTML: String(a), plain: p + ' ÷ ' + b + ' = ' + a, hints: ['Rovesciala: ' + b + ' × ? = ' + p + ' → <b>' + a + '</b>.'].concat(mulHints(a, b).slice(0, 1)) };
+    if (a === b) {   /* a square: the divisor would be the answer itself, so it is hidden */
+      c.qHTML = p + '<span class="op">÷</span>?'; c.prompt = 'È un quadrato: quale numero, moltiplicato per sé stesso, fa ' + p + '?';
+      c.plain = p + ' ÷ ' + a + ' = ' + a + ' (√' + p + ')'; c.hints = ['È un quadrato: ' + a + ' × ' + a + ' = ' + p + ', quindi √' + p + ' = <b>' + a + '</b>.'];
+    }
     c.check = function (raw) { return checkExact(raw, a); };
   } else if (t === 'i') {
     c = { kind: 'inv', fact: 'inv' + a, tag: 'Inverse · 1/x', qHTML: '1<span class="op">/</span>' + a, prompt: 'Quanto vale in percentuale? Bastano 3 cifre.', mode: 'num', unit: '%',
@@ -1120,6 +1249,7 @@ function makeArithCard(key) {
       answerHTML: '2<sup>' + a + '</sup>', plain: grp(lv) + ' = 2^' + a, hints: powRevHints(a) };
     c.check = function (raw) { return checkPowR(raw, a); };
   }
+  if (!c) c = makeExtraCard(t, a, b);
   c.key = key; c.sec = 'a';
   return c;
 }
@@ -1364,7 +1494,7 @@ function defaultSettings() {
   for (var n = 1; n <= 20; n++) nums[n] = n >= 2;
   for (var x = 1; x <= 40; x++) invs[x] = x >= 2;
   for (var e = 2; e <= 20; e++) pows[e] = true;
-  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
+  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, rad: true, radr: true, frac: true, pot: false, potr: false, nor: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
     p: { unlock: false, sc0: false, off: {}, speed: 1 },
     k: { mode: 'let', dir: 'both', wpm: 18, eff: 8, tone: 600, vol: 0.5, key: 'two', aid: 'new', nums: false, unlock: false, tree: true },
     auto: true, pad: coarse, goal: 10 };
@@ -1378,7 +1508,17 @@ function packZ(z) { return [z.s, z.n, z.f, Math.round(z.b), Math.round(z.t), Mat
 function unpackZ(a) { return { s: +a[0] || 0, n: +a[1] || 0, f: +a[2] || 0, b: +a[3] || 0, t: +a[4] || 0, d: +a[5] || 0, h: +a[6] || 0, lv: +a[7] || 0, due: +a[8] || 0 }; }
 var settings = data.m.s;
 
-function validFocus(f) { var m = /^t:(\d+)$/.exec(f || ''); return f === 'all' || f === 'sq' || f === 'd1' || f === 'd2' || f === 'd3' || (!!m && +m[1] >= 1 && +m[1] <= 20); }
+/* a practice choice: 'all', or one or more parts joined by commas: sq, d1, d2, d3, t:N (for example 'd1,d2,d3' or 't:17,t:19') */
+var FOCUS_GROUPS = ['sq', 'd1', 'd2', 'd3'];
+function focusParts(f) { return !f || f === 'all' ? [] : String(f).split(','); }
+function validPart(x) { var m = /^t:(\d+)$/.exec(x); return FOCUS_GROUPS.indexOf(x) >= 0 || (!!m && +m[1] >= 1 && +m[1] <= 20); }
+function validFocus(f) { if (f === 'all') return true; var ps = focusParts(f); return ps.length > 0 && ps.every(validPart); }
+function focusJoin(parts) {
+  var out = FOCUS_GROUPS.filter(function (g) { return parts.indexOf(g) >= 0; });
+  for (var n = 1; n <= 20; n++) if (parts.indexOf('t:' + n) >= 0) out.push('t:' + n);
+  return out.length ? out.join(',') : 'all';
+}
+function focusTables(f) { return focusParts(f).filter(function (x) { return x.indexOf('t:') === 0; }).map(function (x) { return +x.slice(2); }); }
 function mergeSettings(s) {
   var d = defaultSettings();
   if (!s || typeof s !== 'object') return d;
@@ -1386,7 +1526,7 @@ function mergeSettings(s) {
     for (var n = 1; n <= 20; n++) if (s.a.nums && typeof s.a.nums[n] === 'boolean') d.a.nums[n] = s.a.nums[n];
     for (var x = 1; x <= 40; x++) if (s.a.invs && typeof s.a.invs[x] === 'boolean') d.a.invs[x] = s.a.invs[x];
     for (var e = 2; e <= 20; e++) if (s.a.pows && typeof s.a.pows[e] === 'boolean') d.a.pows[e] = s.a.pows[e];
-    ['mul', 'div', 'inv', 'invr', 'pow', 'powr'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
+    ['mul', 'div', 'inv', 'invr', 'pow', 'powr', 'rad', 'radr', 'frac', 'pot', 'potr', 'nor'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
     if ([0.7, 1, 1.6].indexOf(s.a.speed) >= 0) d.a.speed = s.a.speed;
     if (s.a.mode === 'mem' || s.a.mode === 'std') d.a.mode = s.a.mode;
     if (s.a.vmode === 'mem' || s.a.vmode === 'std') d.a.vmode = s.a.vmode;
@@ -1509,6 +1649,12 @@ function activeNums() { var out = []; for (var n = 1; n <= 20; n++) if (settings
 /* the pairs (a, b) of a practice choice: everything, one table, the squares, or the products at distance 1, 2, 3 from a square
    ((m − d)(m + d) = m² − d², around the squares from 10² up). Both numbers must be among the active ones, except the table chosen. */
 function focusPairs(f) {
+  var ps = focusParts(f);
+  if (ps.length > 1) {   /* several parts: the union, without repeats */
+    var seen = {}, all = [];
+    ps.forEach(function (x) { focusPairs(x).forEach(function (p) { var k = p[0] + ':' + p[1]; if (!seen[k]) { seen[k] = 1; all.push(p); } }); });
+    return all;
+  }
   var nums = activeNums(), on = {}, out = [];
   nums.forEach(function (n) { on[n] = 1; });
   function both(a, b) { out.push([a, b]); if (a !== b) out.push([b, a]); }
@@ -1525,6 +1671,14 @@ function focusPairs(f) {
   return out;
 }
 function focusLabel(f) {
+  var ps = focusParts(f);
+  if (ps.length > 1) {
+    var tabs = focusTables(f), gs = ps.filter(function (x) { return x.indexOf('t:') !== 0; }), ds = gs.filter(function (x) { return x[0] === 'd'; }), bits = [];
+    if (gs.indexOf('sq') >= 0) bits.push('quadrati');
+    if (ds.length) bits.push((ds.length > 1 ? 'distanze ' : 'distanza ') + ds.map(function (x) { return x[1]; }).join(', ').replace(/, (\d)$/, ' e $1'));
+    if (tabs.length) bits.push((tabs.length > 1 ? 'tabelline del ' : 'tabellina del ') + tabs.join(', ').replace(/, (\d+)$/, ' e $1'));
+    return bits.join(' + ');
+  }
   if (f === 'sq') return 'solo i quadrati';
   if (f === 'd1' || f === 'd2' || f === 'd3') return 'distanza ' + f[1] + ' da un quadrato';
   if (f && f.indexOf('t:') === 0) return 'la tabellina del ' + f.slice(2);
@@ -1540,6 +1694,11 @@ function vKeys() {
   var S = settings.a, keys = [];
   for (var x = 1; x <= 40; x++) if (S.invs[x]) { if (S.inv) keys.push('i:' + x); if (S.invr) keys.push('r:' + x); }
   for (var e = 2; e <= 20; e++) if (S.pows[e]) { if (S.pow) keys.push('w:' + e); if (S.powr) keys.push('l:' + e); }
+  X_ROOTS.forEach(function (n) { if (S.rad) keys.push('s:' + n); if (S.radr) keys.push('q:' + n); });
+  if (S.frac) X_FRACS.forEach(function (f) { keys.push('f:' + f[0] + ':' + f[1]); });
+  for (var q = 21; q <= 31; q++) { if (S.pot) keys.push('x:' + q); if (S.potr) keys.push('y:' + q); }
+  for (var c = 2; c <= 10; c++) { if (S.pot) keys.push('c:' + c); if (S.potr) keys.push('b:' + c); }
+  if (S.nor) X_NORM.forEach(function (f, i) { keys.push('n:' + i); });
   return keys;
 }
 function arTab() { return tab === 'v' ? 'v' : 't'; }
@@ -1568,7 +1727,7 @@ function morseKeys() {
   kChars().forEach(function (ch) { if (dir !== 'tx') keys.push('kr:' + ch); if (dir !== 'rx') keys.push('ks:' + ch); });
   return keys;
 }
-function arithFact(k) { var p = k.split(':'); return p[0] === 'm' || p[0] === 'd' ? Math.min(+p[1], +p[2]) + 'x' + Math.max(+p[1], +p[2]) : (p[0] === 'w' || p[0] === 'l' ? 'pow' : 'inv') + p[1]; }
+function arithFact(k) { var p = k.split(':'); return p[0] === 'm' || p[0] === 'd' ? Math.min(+p[1], +p[2]) + 'x' + Math.max(+p[1], +p[2]) : XF[p[0]] ? XF[p[0]] + (p[0] === 'c' || p[0] === 'b' ? 'c' : '') + p.slice(1).join('/') : (p[0] === 'w' || p[0] === 'l' ? 'pow' : 'inv') + p[1]; }
 var DECK = {
   t: {
     keys: function () { return tabKeys(); }, cap: 10, factOf: arithFact,
@@ -1580,20 +1739,13 @@ var DECK = {
   },
   v: {
     keys: vKeys, cap: 10, factOf: arithFact,
-    newPick: function (news) {
-      var groups = [
-        { w: 0.6, ks: news.filter(function (k) { return k[0] === 'i' || k[0] === 'r'; }) },
-        { w: 0.4, ks: news.filter(function (k) { return k[0] === 'w' || k[0] === 'l'; }) }
-      ].filter(function (g) { return g.ks.length; });
-      var tot = 0; groups.forEach(function (g) { tot += g.w; });
+    newPick: function (news) {   /* a family at random (by weight), then: inverses in any order, the others from the simplest */
+      var by = {}, fams = [], tot = 0;
+      news.forEach(function (k) { var f = memFamily(k); if (!by[f]) { by[f] = []; fams.push(f); tot += MEM_FAM_W[f]; } by[f].push(k); });
       var r = Math.random() * tot, gi = 0;
-      while (gi < groups.length - 1 && r >= groups[gi].w) { r -= groups[gi].w; gi++; }
-      var ks = groups[gi].ks;
-      if (ks[0][0] === 'w' || ks[0][0] === 'l') {   /* powers: learn them in order, smallest exponent first */
-        var lo = Math.min.apply(null, ks.map(function (k) { return +k.split(':')[1]; }));
-        ks = ks.filter(function (k) { return +k.split(':')[1] === lo; });
-      }
-      return pick(ks);
+      while (gi < fams.length - 1 && r >= MEM_FAM_W[fams[gi]]) { r -= MEM_FAM_W[fams[gi]]; gi++; }
+      var fam = fams[gi], ks = by[fam].sort(function (x, y) { return memOrder(x) - memOrder(y); });
+      return fam === 'inv' ? pick(ks) : pick(ks.slice(0, fam === 'pow' ? 2 : 4));
     },
     make: function (k) { return makeArithCard(k); }
   },
@@ -1626,8 +1778,8 @@ var DECK = {
    and comes back after 2 questions, then 4, then 8, until it has been answered from memory 3 times in a row.
    Between those re-asks the app checks facts that should already be automatic. Only facts already learned in the
    standard mode are used (except on the path and with a practice choice, where new ones are shown first). */
-var MEM_KIND = { m: 'mul', d: 'div', i: 'inv', r: 'invr', w: 'pow', l: 'powr' };
-var MEM_EXTRA = { mul: 0, div: 300, inv: 500, invr: 500, pow: 200, powr: 400 };
+var MEM_KIND = { m: 'mul', d: 'div', i: 'inv', r: 'invr', w: 'pow', l: 'powr', s: 'rad', q: 'radr', f: 'frac', x: 'pot', c: 'pot', y: 'potr', b: 'potr', n: 'nor' };
+var MEM_EXTRA = { mul: 0, div: 300, inv: 500, invr: 500, pow: 200, powr: 400, rad: 500, radr: 500, frac: 500, pot: 400, potr: 400, nor: 500 };
 var MEM_WCAP = 6, MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
 /* fixed facts keep coming back: in the session after 16, 32, 64… questions; across days after 2, 6, 15, 40, 100, 240 days.
    A slow or wrong answer at any point sends the fact back to be fixed again. */
@@ -1644,6 +1796,9 @@ function memAnsLen(key) {
   if (t === 'm') return String(a * b).length;
   if (t === 'i') return invShort(a).text.replace(/\D/g, '').length;
   if (t === 'w') return String(Math.pow(2, a)).length;
+  if (t === 's' || t === 'f' || t === 'n') return 3;
+  if (t === 'x') return String(a * a).length;
+  if (t === 'c') return String(a * a * a).length;
   return String(a).length;
 }
 /* time within which an answer counts as recalled from memory: about 2 s to read and recall plus typing time per digit */
@@ -1679,9 +1834,10 @@ function memQueue(k, gap) { MEM.Q = MEM.Q.filter(function (q) { return q.k !== k
    inside a level table by table (by the larger factor), multiplication before division.
    Inverses and powers have their own ladders (x up to 10, 20, 40; exponents up to 10, then 20). */
 var MEM_TIER_NAME = { 1: 'Entro 10 × 10', 2: 'Fino a 10 × 20', 3: 'Da 11 a 20 × da 11 a 20' };
-function memFamily(k) { var t = k[0]; return t === 'm' || t === 'd' ? 'tab' : t === 'i' || t === 'r' ? 'inv' : 'pow'; }
+function memFamily(k) { var t = k[0]; return XF[t] || (t === 'm' || t === 'd' ? 'tab' : t === 'i' || t === 'r' ? 'inv' : 'pow'); }
 function memTier(k) {
   var p = k.split(':'), t = p[0], a = +p[1], b = +p[2];
+  if (XF[t]) return 1;
   if (t === 'm' || t === 'd') { var hi = Math.max(a, b), lo = Math.min(a, b); return hi <= 10 ? 1 : lo <= 10 ? 2 : 3; }
   if (t === 'i' || t === 'r') return a <= 10 ? 1 : a <= 20 ? 2 : 3;
   return a <= 10 ? 1 : 2;
@@ -1689,6 +1845,7 @@ function memTier(k) {
 function memOrder(k) {
   var p = k.split(':'), t = p[0], a = +p[1], b = +p[2], tier = memTier(k);
   if (t === 'm' || t === 'd') return tier * 1e6 + Math.max(a, b) * 1e4 + Math.min(a, b) * 100 + (t === 'm' ? (a <= b ? 0 : 1) : (a <= b ? 2 : 3));
+  if (XF[t]) return 1e6 + (t === 'f' ? b * 20 + a : t === 'c' || t === 'b' ? 100 + a : a) * 100 + (XREV[t] ? 1 : 0);
   return tier * 1e6 + a * 100 + (t === 'i' || t === 'w' ? 0 : 1);
 }
 /* a division comes only once its multiplication is memorized (same for inverses and powers read backwards) */
@@ -1697,6 +1854,7 @@ function memEligible(k, inSet) {
   if (t === 'd') base = ['m:' + p[1] + ':' + p[2], 'm:' + p[2] + ':' + p[1]];
   else if (t === 'r') base = ['i:' + p[1]];
   else if (t === 'l') base = ['w:' + p[1]];
+  else if (XREV[t]) base = [XREV[t] + ':' + p[1]];
   return base.filter(function (x) { return inSet[x]; }).every(function (x) { return memStatus(x) === 'auto'; });
 }
 /* other tabelline with the same result (14 × 6 and 7 × 12 = 84), with both numbers among the active ones */
@@ -1767,7 +1925,7 @@ function memPathInfo(act) {
 function memSortKey(k) { return memFocused() ? memOrder(k) : (memFamily(k) === 'tab' ? memPathStage(k) : 0) * 1e7 + memOrder(k); }
 /* facts still to work on for each family: tabelline on the path (steps 1–7 even if not learned yet), the rest only if learned */
 function memLadder(act, inSet, skip) {
-  var fams = { tab: [], inv: [], pow: [] }, foc = memFocused(), gate = inSet;
+  var fams = { tab: [], inv: [], pow: [], rad: [], frac: [], sqc: [], nor: [] }, foc = memFocused(), gate = inSet;
   if (foc) { gate = {}; act.forEach(function (k) { gate[k] = 1; }); }   /* with a choice: divisions wait for their multiplication in the choice */
   act.forEach(function (k) {
     if (skip && skip(k)) return;
@@ -1787,7 +1945,7 @@ function memTabPool(list, info) {
   if (!pool.length && info.cur < 8 && !MEM_PATH[info.cur - 1].strict && list.length) { var nx = memPathStage(list[0]); pool = list.filter(function (k) { return memPathStage(k) === nx; }); }
   return pool;
 }
-var MEM_FAM_W = { tab: 0.6, inv: 0.25, pow: 0.15 };
+var MEM_FAM_W = { tab: 0.6, inv: 0.25, pow: 0.15, rad: 0.2, frac: 0.2, sqc: 0.15, nor: 0.1 };
 function memNext() {
   var act = arithKeys();
   if (!act.length) return null;
@@ -2424,12 +2582,12 @@ function renderMemPanel() {
     }
   }
   var ladAll = memLadder(act, inSet, function (k) { return MEM.W.indexOf(k) >= 0 || memQueued(k); });
-  var lad = t === 'v' ? ladAll.inv.concat(ladAll.pow).sort(function (a, b) { return memSortKey(a) - memSortKey(b); }) : foc ? ladAll.tab : memTabPool(ladAll.tab, info);
+  var lad = t === 'v' ? Object.keys(ladAll).filter(function (f) { return f !== 'tab'; }).reduce(function (a, f) { return a.concat(ladAll[f]); }, []).sort(function (a, b) { return memSortKey(a) - memSortKey(b); }) : foc ? ladAll.tab : memTabPool(ladAll.tab, info);
   lad = lad.slice(0, 6);
   if (lad.length) h += '<h3>Le prossime, in ordine</h3><div class="mwork">' + lad.map(function (k) { var z = MZ.get(k), o = STATE.a.get(k), c = makeArithCard(k), stt = memStatus(k); return '<div><span>' + esc(c.plain) + '</span><span>' + (stt === 'unknown' ? 'da verificare' : stt === 'none' && !(z && z.n) ? 'nuova' : fmtSec(z && z.n ? z.t : o.t) + ' (soglia ' + fmtSec(memThr(k)) + ')') + '</span></div>'; }).join('') + '</div>';
   var back = Object.keys(MEM.g).map(function (k) { return MEM.Q.filter(function (x) { return x.k === k; })[0]; }).filter(Boolean).sort(function (x, y) { return x.at - y.at; });
   if (back.length) h += '<h3>Fissate oggi, tornano più avanti</h3><div class="mwork">' + back.slice(0, 6).map(function (q) { var c = makeArithCard(q.k); return '<div><span>' + esc(c.plain) + '</span><span>tra ' + plural(Math.max(1, q.at - MEM.n - 1), 'domanda', 'domande') + '</span></div>'; }).join('') + (back.length > 6 ? '<div><span class="note" style="margin:0">e altre ' + (back.length - 6) + '</span><span></span></div>' : '') + '</div>';
-  var note = t === 'v' ? 'Lavora sulle inverse e sulle potenze che hai già imparato nella modalità Standard, dalle più semplici; quelle al contrario arrivano quando la diretta è a memoria. '
+  var note = t === 'v' ? 'Lavora sugli esercizi che hai già imparato nella modalità Standard (inverse, potenze, radici, frazioni…), dai più semplici; quelli al contrario arrivano quando la diretta è a memoria. '
     : foc ? 'Con una scelta attiva lavori solo su quelle, dalle più semplici: le nuove te le mostro la prima volta, poi le devi ricordare; le divisioni arrivano quando la loro moltiplicazione è a memoria. Per tornare al percorso completo scegli “Tutte le tabelline”. '
     : 'Il percorso parte dai quadrati, poi le tabelline a distanza 1, 2 e 3 da un quadrato (14 × 16 = 15² − 1), i rettangoli (15 × 16 = 15² + 15) e i loro vicini, le tabelline facili, e infine tutto il resto; le tabelline con lo stesso risultato ogni tanto arrivano vicine. Quelle facili da scambiare, come 16 × 7 e 17 × 6, dopo un paio di risposte veloci arrivano a tradimento una dopo l’altra. Se vuoi lavorare su un gruppo solo (una tabellina, i quadrati, una distanza) sceglilo sopra la domanda. ';
   h += '<p class="note" style="margin:12px 0 0">' + note + MEM_TAIL + '</p>';
@@ -2444,21 +2602,29 @@ function renderArithSide() {
   els.aWeak.innerHTML = weakList(tab, keys);
   var leg = legendHTML(memOn() ? LEGEND_MEM : LEGEND_STD);
   if (tab === 't') { els.tLegend.innerHTML = leg; renderTGrid(); renderFocusBar(); }
-  else { els.vLegend.innerHTML = leg; renderIGrid(); renderWGrid(); }
+  else { els.vLegend.innerHTML = leg; renderIGrid(); renderWGrid(); renderXGrids(); }
 }
 function renderFocusBar() {
-  var f = settings.a.focus || 'all';
-  if (els.tFocus.value !== f) els.tFocus.value = f;
+  var f = settings.a.focus || 'all', ps = focusParts(f);
+  els.tFocus.textContent = (f === 'all' ? 'Tutte le tabelline' : focusLabel(f).replace(/^./, function (c) { return c.toUpperCase(); }));
+  document.getElementById('fAll').setAttribute('aria-pressed', f === 'all' ? 'true' : 'false');
+  Array.prototype.forEach.call(document.querySelectorAll('#fGroups button, #fTables button'), function (b) { b.setAttribute('aria-pressed', ps.indexOf(b.getAttribute('data-f')) >= 0 ? 'true' : 'false'); });
+  document.getElementById('fPickNote').textContent = f === 'all' ? 'Tutte le tabelline dei numeri attivi' : plural(tabKeys().length, 'esercizio', 'esercizi') + ' in tutto';
   if (f === 'all') { els.focusNote.textContent = ''; return; }
   var keys = tabKeys(), n = 0;
   if (memOn()) { keys.forEach(function (k) { if (memStatus(k) === 'auto') n++; }); els.focusNote.textContent = 'a memoria ' + n + ' su ' + keys.length; }
   else { keys.forEach(function (k) { var o = STATE.a.get(k); if (o && o.s === -1) n++; }); els.focusNote.textContent = plural(keys.length, 'esercizio', 'esercizi') + ', ' + n + ' imparati'; }
 }
 function buildFocusOptions() {
-  var h = '<option value="all">Tutte le tabelline</option><optgroup label="Il percorso"><option value="sq">Solo i quadrati</option>' +
-    '<option value="d1">Distanza 1: 14 × 16 = 15² − 1</option><option value="d2">Distanza 2: 13 × 17 = 15² − 4</option><option value="d3">Distanza 3: 12 × 18 = 15² − 9</option></optgroup><optgroup label="Una tabellina">';
-  for (var n = 1; n <= 20; n++) h += '<option value="t:' + n + '">Tabellina del ' + n + '</option>';
-  els.tFocus.innerHTML = h + '</optgroup>';
+  document.getElementById('fGroups').innerHTML = [['sq', 'Quadrati', '15 × 15'], ['d1', 'Distanza 1', '14 × 16 = 15² − 1'], ['d2', 'Distanza 2', '13 × 17 = 15² − 4'], ['d3', 'Distanza 3', '12 × 18 = 15² − 9']]
+    .map(function (g) { return '<button type="button" data-f="' + g[0] + '" aria-pressed="false"><b>' + g[1] + '</b><small>' + g[2] + '</small></button>'; }).join('');
+  var h = ''; for (var n = 1; n <= 20; n++) h += '<button type="button" data-f="t:' + n + '" aria-pressed="false" aria-label="Tabellina del ' + n + '">' + n + '</button>';
+  document.getElementById('fTables').innerHTML = h;
+}
+function toggleFocusPart(x) {
+  var ps = focusParts(settings.a.focus), i = ps.indexOf(x);
+  if (i >= 0) ps.splice(i, 1); else ps.push(x);
+  focusChanged(focusJoin(ps));
 }
 function focusChanged(f) {
   if (!validFocus(f)) f = 'all';
@@ -2468,7 +2634,14 @@ function focusChanged(f) {
   if (tab === 't') nextQuestion();
   renderAll();
 }
-els.tFocus.addEventListener('change', function () { focusChanged(els.tFocus.value); });
+function openFocusPick(open) { document.getElementById('focusPick').hidden = !open; els.tFocus.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+els.tFocus.addEventListener('click', function () { openFocusPick(document.getElementById('focusPick').hidden); });
+document.getElementById('fDone').addEventListener('click', function () { openFocusPick(false); });
+document.getElementById('focusPick').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button[data-f]'); if (!b) return;
+  var x = b.getAttribute('data-f');
+  if (x === 'all') focusChanged('all'); else toggleFocusPart(x);
+});
 var selT = null, selI = null, selW = null;
 function cellLevel(keys) {
   if (memOn()) { var ml = 99; keys.forEach(function (k) { ml = Math.min(ml, memLevel(k)); }); return ml === 99 ? 0 : ml; }
@@ -2477,14 +2650,14 @@ function cellLevel(keys) {
   return seen ? lv : 0;
 }
 function renderTGrid() {
-  var S = settings.a, f = S.focus || 'all', inF = null, ft = f.indexOf('t:') === 0 ? +f.slice(2) : 0, h = '<div class="th">×</div>', a, b;
+  var S = settings.a, f = S.focus || 'all', inF = null, fts = focusTables(f), h = '<div class="th">×</div>', a, b;
   if (f !== 'all') { inF = {}; focusPairs(f).forEach(function (p) { inF[p[0] + ':' + p[1]] = 1; }); }
   for (b = 1; b <= 20; b++) h += '<div class="th' + (S.nums[b] ? '' : ' off') + '">' + b + '</div>';
   for (a = 1; a <= 20; a++) {
-    h += '<button type="button" class="th thb' + (S.nums[a] ? '' : ' off') + (ft === a ? ' on' : '') + '" data-t="' + a + '" aria-label="Allena solo la tabellina del ' + a + '">' + a + '</button>';
+    h += '<button type="button" class="th thb' + (S.nums[a] ? '' : ' off') + (fts.indexOf(a) >= 0 ? ' on' : '') + '" data-t="' + a + '" aria-label="Aggiungi o togli la tabellina del ' + a + '">' + a + '</button>';
     for (b = 1; b <= 20; b++) {
       var lv = cellLevel(['m:' + a + ':' + b, 'd:' + a + ':' + b]);
-      var off = !(S.nums[a] && S.nums[b]) && !(ft && (a === ft || b === ft)), nf = inF && !inF[a + ':' + b];
+      var off = !(S.nums[a] && S.nums[b]) && !(fts.indexOf(a) >= 0 || fts.indexOf(b) >= 0), nf = inF && !inF[a + ':' + b];
       h += '<button type="button" class="tc lv' + lv + (off ? ' off' : '') + (nf ? ' nf' : '') + (selT === a + ':' + b ? ' sel' : '') + '" data-a="' + a + '" data-b="' + b + '" aria-label="' + a + ' per ' + b + '"><span class="pv">' + (a * b) + '</span></button>';
     }
   }
@@ -2500,7 +2673,7 @@ function cardStatus(sec, key) {
 }
 els.tGrid.addEventListener('click', function (ev) {
   var th = ev.target.closest('.thb');
-  if (th) { var n = +th.getAttribute('data-t'); focusChanged(settings.a.focus === 't:' + n ? 'all' : 't:' + n); return; }
+  if (th) { toggleFocusPart('t:' + th.getAttribute('data-t')); return; }
   var b = ev.target.closest('.tc'); if (!b) return;
   var a = +b.getAttribute('data-a'), c = +b.getAttribute('data-b');
   selT = a + ':' + c;
@@ -2515,6 +2688,39 @@ function renderIGrid() {
   }
   els.iGrid.innerHTML = h;
 }
+/* maps of the other facts (roots, fractions, squares and cubes, normal): only for the exercises switched on */
+var selX = null;
+function xGroups() {
+  var S = settings.a, g = [];
+  if (S.rad || S.radr) g.push({ id: 'rad', title: 'Radici quadrate', cls: '', items: X_ROOTS.map(function (n) { return { d: 's:' + n, r: 'q:' + n, b: '√' + n, s: sig3(Math.sqrt(n)) }; }) });
+  if (S.frac) g.push({ id: 'frac', title: 'Frazioni in %', cls: '', items: X_FRACS.map(function (f) { return { d: 'f:' + f[0] + ':' + f[1], b: f[0] + '/' + f[1], s: sig3(100 * f[0] / f[1]) }; }) });
+  if (S.pot || S.potr) {
+    var it = [], n;
+    for (n = 21; n <= 31; n++) it.push({ d: 'x:' + n, r: 'y:' + n, b: n + '<sup>2</sup>', s: String(n * n) });
+    for (n = 2; n <= 10; n++) it.push({ d: 'c:' + n, r: 'b:' + n, b: n + '<sup>3</sup>', s: String(n * n * n) });
+    g.push({ id: 'sqc', title: 'Quadrati e cubi', cls: ' w5', items: it });
+  }
+  if (S.nor) g.push({ id: 'nor', title: 'Distribuzione normale', cls: ' w5', items: X_NORM.map(function (f, i) { return { d: 'n:' + i, b: f.t === 'in' ? '±' + f.s + 'σ' : f.t === 'out' ? '>' + f.s + 'σ' : f.p + '%', s: f.a + (f.t === 'z' ? 'σ' : '%') }; }) });
+  return g;
+}
+function renderXGrids() {
+  var S = settings.a, h = '';
+  document.getElementById('iGridH').hidden = els.iGrid.parentNode.hidden = els.iDetail.hidden = !(S.inv || S.invr);
+  document.getElementById('wGridH').hidden = els.wGrid.parentNode.hidden = els.wDetail.hidden = !(S.pow || S.powr);
+  xGroups().forEach(function (g) {
+    h += '<h3>' + g.title + '</h3><div class="mapwrap"><div class="igrid xgrid' + g.cls + '">' + g.items.map(function (it) {
+      var ks = [it.d].concat(it.r ? [it.r] : []).filter(function (k) { return settings.a[MEM_KIND[k[0]]]; });
+      return '<button type="button" class="ic lv' + cellLevel(ks) + (selX === it.d ? ' sel' : '') + '" data-k="' + it.d + '"' + (it.r ? ' data-r="' + it.r + '"' : '') + '><b>' + it.b + '</b><small>' + it.s + '</small></button>';
+    }).join('') + '</div></div><p class="detail" data-x="' + g.id + '">' + (selX && memFamily(selX) === g.id ? xDetail(selX) : 'Tocca una casella per vedere il valore e come ricordarlo.') + '</p>';
+  });
+  document.getElementById('xGrids').innerHTML = h;
+}
+function xDetail(k) {
+  var c = makeArithCard(k), rk = XREV_OF[k[0]] ? XREV_OF[k[0]] + k.slice(1) : null;
+  return '<b>' + esc(c.plain) + '</b> — ' + c.hints.join(' ') + '<br>' + (rk ? 'Diretta: ' : '') + cardStatus('a', k) + '.' + (rk ? ' Al contrario: ' + cardStatus('a', rk) + '.' : '');
+}
+var XREV_OF = { s: 'q', x: 'y', c: 'b' };
+document.getElementById('xGrids').addEventListener('click', function (ev) { var b = ev.target.closest('.ic'); if (!b) return; selX = b.getAttribute('data-k'); renderXGrids(); });
 function renderWGrid() {
   var S = settings.a, h = '';
   for (var e = 2; e <= 20; e++) {
@@ -2606,11 +2812,11 @@ function syncSettingsUI() {
   var A = settings.a, P = settings.p, K = settings.k;
   chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs); chipRow(els.aPows, 20, A.pows, 2);
   els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr; els.aPow.checked = A.pow; els.aPowr.checked = A.powr;
+  [['aRad', 'rad'], ['aRadr', 'radr'], ['aFrac', 'frac'], ['aPot', 'pot'], ['aPotr', 'potr'], ['aNor', 'nor']].forEach(function (p) { document.getElementById(p[0]).checked = A[p[1]]; });
   setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed); setSeg(els.aMemSev, A.memSev);
   var t1 = memThr('m:7:8'), t2 = memThr('m:17:13');
   els.aMemSevNote.textContent = 'Per esempio 7 × 8 entro ' + fmtSec(t1) + ' e 17 × 13 entro ' + fmtSec(t2) + '; la risposta compare da sola dopo ' + fmtSec(memLimit(t1)) + ' e ' + fmtSec(memLimit(t2)) + '.';
   els.aMemReveal.checked = A.memReveal; els.aMemCopy.checked = A.memCopy; els.aMemUnlock.checked = A.memUnlock;
-  if (els.tFocus.value !== A.focus) els.tFocus.value = A.focus;
   renderModeBar();
   els.aAuto.checked = els.pAuto.checked = els.kAuto.checked = settings.auto;
   els.aPad.checked = els.pPad.checked = settings.pad;
@@ -2690,8 +2896,9 @@ els.aPowsQuick.addEventListener('click', function (ev) {
   for (var e = 2; e <= 20; e++) settings.a.pows[e] = q === 'all' ? true : q === 'none' ? false : q === 'low' ? e <= 10 : e > 10;
   settingsChanged('v', true);
 });
-[['aMul', 'mul', 't'], ['aDiv', 'div', 't'], ['aInv', 'inv', 'v'], ['aInvr', 'invr', 'v'], ['aPow', 'pow', 'v'], ['aPowr', 'powr', 'v']].forEach(function (p) {
-  els[p[0]].addEventListener('change', function () { settings.a[p[1]] = els[p[0]].checked; settingsChanged(p[2], true); });
+[['aMul', 'mul', 't'], ['aDiv', 'div', 't'], ['aInv', 'inv', 'v'], ['aInvr', 'invr', 'v'], ['aPow', 'pow', 'v'], ['aPowr', 'powr', 'v'], ['aRad', 'rad', 'v'], ['aRadr', 'radr', 'v'], ['aFrac', 'frac', 'v'], ['aPot', 'pot', 'v'], ['aPotr', 'potr', 'v'], ['aNor', 'nor', 'v']].forEach(function (p) {
+  var el = document.getElementById(p[0]);
+  el.addEventListener('change', function () { settings.a[p[1]] = el.checked; settingsChanged(p[2], true); });
 });
 els.aSpeed.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.speed = parseFloat(b.getAttribute('data-v')); settingsChanged(tab, false); } });
 els.aMemSev.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.memSev = parseFloat(b.getAttribute('data-v')); settingsChanged(tab, false); } });
@@ -2725,7 +2932,7 @@ function resetBox(el, t) {
     el.children[1].addEventListener('click', function () {
       var days = data.m.st.days;
       if (isAr(t)) {
-        var fam = t === 't' ? /^[md]:/ : /^[irwl]:/;
+        var fam = t === 't' ? /^[md]:/ : /^[^md]:/;
         STATE.a.forEach(function (o, k) { if (fam.test(k)) STATE.a.delete(k); });
         MZ.forEach(function (o, k) { if (fam.test(k)) MZ.delete(k); });
         memResetSession(t);
