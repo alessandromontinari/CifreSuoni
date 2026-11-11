@@ -440,7 +440,8 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .ktree .kn.kl2 .sh { fill: var(--lv2); }
 .ktree .kn.kl3 .sh { fill: var(--lv3); }
 .ktree .kn.kl4 .sh { fill: var(--lv4); }
-.ktree .kn { cursor: pointer; }
+.ktree .kn { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ktree .kn .hit { fill: transparent; stroke: none; pointer-events: all; }
 .ktree .kn text { font-family: var(--f-display); font-weight: 800; font-size: 16px; text-anchor: middle; dominant-baseline: central; fill: var(--lv-ink); pointer-events: none; }
 .ktree .kn.kl0 text { fill: var(--muted); }
 .ktree .kn.kl4 text { fill: var(--lv4-ink); }
@@ -636,6 +637,10 @@ details.set[open] summary::after { transform: rotate(-135deg); }
                 <div class="seg" id="aMemSev"><button type="button" data-v="1.8">Molto largo</button><button type="button" data-v="1.35">Largo</button><button type="button" data-v="1">Normale</button><button type="button" data-v="0.8">Stretto</button></div>
               </div>
               <p class="note" id="aMemSevNote" style="margin:0"></p>
+              <div class="set-row"><span>Quante da fissare insieme</span>
+                <div class="seg" id="aMemCap"><button type="button" data-v="4">4</button><button type="button" data-v="6">6</button><button type="button" data-v="8">8</button><button type="button" data-v="10">10</button><button type="button" data-v="12">12</button><button type="button" data-v="15">15</button></div>
+              </div>
+              <p class="note" style="margin:0">Finché non le dici a memoria tre volte di fila girano solo queste; ogni volta che ne fissi una ne entra una nuova. Poche = più ripetizioni ravvicinate; tante = più varietà.</p>
               <label class="check" for="aMemReveal"><input type="checkbox" id="aMemReveal"> Quando la barra arriva in fondo mostra la risposta (così non fai in tempo a calcolarla)</label>
               <label class="check" for="aMemCopy"><input type="checkbox" id="aMemCopy"> Dopo un errore fammi riscrivere la risposta giusta</label>
               <label class="check" for="aMemUnlock"><input type="checkbox" id="aMemUnlock"> Sblocca subito la memorizzazione</label>
@@ -1494,7 +1499,7 @@ function defaultSettings() {
   for (var n = 1; n <= 20; n++) nums[n] = n >= 2;
   for (var x = 1; x <= 40; x++) invs[x] = x >= 2;
   for (var e = 2; e <= 20; e++) pows[e] = true;
-  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, rad: true, radr: true, frac: true, pot: false, potr: false, nor: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
+  return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, rad: true, radr: true, frac: true, pot: false, potr: false, nor: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memCap: 10, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
     p: { unlock: false, sc0: false, off: {}, speed: 1 },
     k: { mode: 'let', dir: 'both', wpm: 18, eff: 8, tone: 600, vol: 0.5, key: 'two', aid: 'new', nums: false, unlock: false, tree: true },
     auto: true, pad: coarse, goal: 10 };
@@ -1532,6 +1537,7 @@ function mergeSettings(s) {
     if (s.a.vmode === 'mem' || s.a.vmode === 'std') d.a.vmode = s.a.vmode;
     if (validFocus(s.a.focus)) d.a.focus = s.a.focus;
     if ([0.8, 1, 1.35, 1.8].indexOf(s.a.memSev) >= 0) d.a.memSev = s.a.memSev;
+    if ([4, 6, 8, 10, 12, 15].indexOf(s.a.memCap) >= 0) d.a.memCap = s.a.memCap;
     ['memReveal', 'memCopy', 'memUnlock', 'memAnn'].forEach(function (k) { if (typeof s.a[k] === 'boolean') d.a[k] = s.a[k]; });
   }
   if (s.p) {
@@ -1780,7 +1786,9 @@ var DECK = {
    standard mode are used (except on the path and with a practice choice, where new ones are shown first). */
 var MEM_KIND = { m: 'mul', d: 'div', i: 'inv', r: 'invr', w: 'pow', l: 'powr', s: 'rad', q: 'radr', f: 'frac', x: 'pot', c: 'pot', y: 'potr', b: 'potr', n: 'nor' };
 var MEM_EXTRA = { mul: 0, div: 300, inv: 500, invr: 500, pow: 200, powr: 400, rad: 500, radr: 500, frac: 500, pot: 400, potr: 400, nor: 500 };
-var MEM_WCAP = 6, MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
+/* how many facts are being fixed at the same time (from the settings) */
+function memCap() { return settings.a.memCap || 10; }
+var MEM_FIX = 3, MEM_GAPS = [2, 4, 8], MEM_AFTER = 16;
 /* fixed facts keep coming back: in the session after 16, 32, 64… questions; across days after 2, 6, 15, 40, 100, 240 days.
    A slow or wrong answer at any point sends the fact back to be fixed again. */
 var MEM_LONG = [2, 6, 15, 40, 100, 240];
@@ -1981,14 +1989,17 @@ function memNext() {
     /* not always the very next one: one of the next few of the same step and level, the earlier ones more likely */
     var list = lad[fams[fi]], st0 = memSortKey(list[0]) / 1e7 | 0, tier = memTier(list[0]);
     var same = function (k) { return (memSortKey(k) / 1e7 | 0) === st0 && memTier(k) === tier; };
-    var win = list.filter(same).slice(0, 6);
-    if (MEM.W.length >= MEM_WCAP) win = win.filter(function (k) { return memStatus(k) === 'unknown'; });   /* working set full: only checks of facts that should already be automatic */
+    var win = list.filter(same);
+    /* with a practice choice the new ones are drawn from the whole choice (all the tables picked), not table by table */
+    if (memFocused()) { for (var si = win.length - 1; si > 0; si--) { var sj = Math.floor(Math.random() * (si + 1)), sx = win[si]; win[si] = win[sj]; win[sj] = sx; } }
+    win = win.slice(0, 6);
+    if (MEM.W.length >= memCap()) win = win.filter(function (k) { return memStatus(k) === 'unknown'; });   /* working set full: only checks of facts that should already be automatic */
     var next = null;
     if (win.length) {
       var wts = [0.3, 0.22, 0.17, 0.13, 0.1, 0.08].slice(0, win.length), wt = 0; wts.forEach(function (x) { wt += x; });
       var rr = Math.random() * wt, wi = 0; while (wi < win.length - 1 && rr >= wts[wi]) { rr -= wts[wi]; wi++; }
       next = win[wi];
-    } else if (MEM.W.length >= MEM_WCAP) next = list.filter(function (k) { return memStatus(k) === 'unknown' && memSortKey(k) / 1e7 <= st0 + 1; })[0];
+    } else if (MEM.W.length >= memCap()) next = list.filter(function (k) { return memStatus(k) === 'unknown' && memSortKey(k) / 1e7 <= st0 + 1; })[0];
     if (next) {
       if (memStatus(next) !== 'unknown') MEM.W.push(next);
       memBringSameProduct(next, actSet, inSet);
@@ -1998,7 +2009,12 @@ function memNext() {
   if (dueC.length) return dueC[0];
   /* 4. nothing due: the fixed facts closest to their check (reviews ahead of time) */
   MEM.extra = true;
-  if (auto.length) { auto.sort(function (a, b) { return memDueAt(MZ.get(a)) - memDueAt(MZ.get(b)); }); return pick(auto.slice(0, 5)); }
+  if (auto.length) {   /* in rotation: every fixed fact once, in random order, before any comes back */
+    var ex = MEM.ex || (MEM.ex = {}), lo = Infinity;
+    auto.forEach(function (k) { lo = Math.min(lo, ex[k] || 0); });
+    var round = auto.filter(function (k) { return (ex[k] || 0) === lo; });
+    var pk = pick(round); ex[pk] = MEM.n; return pk;
+  }
   /* 5. nothing else to do: the next re-ask, or any learned fact */
   var q = MEM.Q.filter(function (x) { return free(x.k); }).sort(function (a, b) { return a.at - b.at; })[0];
   if (q) { MEM.Q.splice(MEM.Q.indexOf(q), 1); return q.k; }
@@ -2178,7 +2194,7 @@ function nextQuestion() {
     if (!mk) { cur[tab] = null; showEmpty(); return; }
     if (MEM.extra && !MEM.W.length && !MEM.told) {
       MEM.told = true;
-      els.bannerText.innerHTML = '<b>Per oggi hai finito</b>: niente da fissare né da ricontrollare. Se continui, ripassi in anticipo quelle già fissate.';
+      els.bannerText.innerHTML = '<b>Per oggi hai finito</b>: niente da fissare né da ricontrollare. Se continui, ripassi in anticipo quelle già fissate, tutte a rotazione.';
       els.banner.hidden = false;
     }
     var mc = makeArithCard(mk), thr = memThr(mk);
@@ -2813,7 +2829,7 @@ function syncSettingsUI() {
   chipRow(els.aNums, 20, A.nums); chipRow(els.aInvs, 40, A.invs); chipRow(els.aPows, 20, A.pows, 2);
   els.aMul.checked = A.mul; els.aDiv.checked = A.div; els.aInv.checked = A.inv; els.aInvr.checked = A.invr; els.aPow.checked = A.pow; els.aPowr.checked = A.powr;
   [['aRad', 'rad'], ['aRadr', 'radr'], ['aFrac', 'frac'], ['aPot', 'pot'], ['aPotr', 'potr'], ['aNor', 'nor']].forEach(function (p) { document.getElementById(p[0]).checked = A[p[1]]; });
-  setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed); setSeg(els.aMemSev, A.memSev);
+  setSeg(els.aSpeed, A.speed); setSeg(els.pSpeed, P.speed); setSeg(els.aMemSev, A.memSev); setSeg(document.getElementById('aMemCap'), A.memCap);
   var t1 = memThr('m:7:8'), t2 = memThr('m:17:13');
   els.aMemSevNote.textContent = 'Per esempio 7 × 8 entro ' + fmtSec(t1) + ' e 17 × 13 entro ' + fmtSec(t2) + '; la risposta compare da sola dopo ' + fmtSec(memLimit(t1)) + ' e ' + fmtSec(memLimit(t2)) + '.';
   els.aMemReveal.checked = A.memReveal; els.aMemCopy.checked = A.memCopy; els.aMemUnlock.checked = A.memUnlock;
@@ -2901,6 +2917,7 @@ els.aPowsQuick.addEventListener('click', function (ev) {
   el.addEventListener('change', function () { settings.a[p[1]] = el.checked; settingsChanged(p[2], true); });
 });
 els.aSpeed.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.speed = parseFloat(b.getAttribute('data-v')); settingsChanged(tab, false); } });
+document.getElementById('aMemCap').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.memCap = parseFloat(b.getAttribute('data-v')); settingsChanged(tab, false); } });
 els.aMemSev.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) { settings.a.memSev = parseFloat(b.getAttribute('data-v')); settingsChanged(tab, false); } });
 [['aMemReveal', 'memReveal'], ['aMemCopy', 'memCopy']].forEach(function (p) { els[p[0]].addEventListener('change', function () { settings.a[p[1]] = els[p[0]].checked; settingsChanged(tab, false); }); });
 els.aMemUnlock.addEventListener('change', function () {
@@ -3079,6 +3096,7 @@ function kPlan(text) {
   return { segs: segs, chars: chars, total: t };
 }
 function kStop() {
+  clearTimeout(KA.afterT);
   KA.timers.forEach(clearTimeout); KA.timers = [];
   if (KA.src) { try { var t = KA.ctx.currentTime; KA.src.gain.gain.cancelScheduledValues(t); KA.src.gain.gain.setValueAtTime(0, t); KA.src.osc.stop(t + 0.01); } catch (e) {} KA.src = null; }
   var cb = KA.onStop; KA.onStop = null; if (cb) cb();
@@ -3107,16 +3125,26 @@ function kPlay(text, onEl, onEnd) {
   return plan;
 }
 /* the sound of a single sign while keying */
+/* It starts at once; if the sign before is still sounding it waits for it to end plus one dot of silence, like a keyer:
+   signs tapped quickly come out with the right rhythm, the same as in the examples. */
 function kBeep(e) {
   var ctx = kCtx(); if (!ctx) return;
   kStop();
   try {
-    var u = 1.2 / settings.k.wpm, d = e === '.' ? u : 3 * u, t0 = ctx.currentTime + 0.01, V = settings.k.vol * 0.6;
+    var u = 1.2 / settings.k.wpm, d = e === '.' ? u : 3 * u, now = ctx.currentTime, t0 = Math.max(now, (KA.beepEnd || 0) + u), V = settings.k.vol * 0.6;
+    if (t0 - now > 0.7) t0 = now;
     var osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.frequency.value = settings.k.tone;
+    osc.type = 'sine'; osc.frequency.value = settings.k.tone;
     g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(V, t0 + 0.004); g.gain.setValueAtTime(V, t0 + d - 0.004); g.gain.linearRampToValueAtTime(0, t0 + d);
     osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(t0 + d + 0.02);
+    KA.beepEnd = t0 + d;
+    var rec = { osc: osc, gain: g }; (KA.beeps = KA.beeps || []).push(rec);
+    osc.onended = function () { var i = KA.beeps.indexOf(rec); if (i >= 0) KA.beeps.splice(i, 1); };
   } catch (err) {}
+}
+function kBeepsOff() {
+  (KA.beeps || []).forEach(function (r) { try { var t = KA.ctx.currentTime; r.gain.gain.cancelScheduledValues(t); r.gain.gain.setValueAtTime(0, t); r.osc.stop(t + 0.01); } catch (e) {} });
+  KA.beeps = []; KA.beepEnd = 0;
 }
 /* straight key: the tone lasts as long as the key is held */
 function kToneOn() {
@@ -3150,7 +3178,7 @@ function kTreeInit() {
     var sh = dot ? '<circle class="sh" cx="' + b[0] + '" cy="' + b[1] + '" r="15"/>'
       : horiz ? '<rect class="sh" x="' + (b[0] - 20) + '" y="' + (b[1] - 11) + '" width="40" height="22" rx="5"/>'
       : '<rect class="sh" x="' + (b[0] - 11) + '" y="' + (b[1] - 20) + '" width="22" height="40" rx="5"/>';
-    nodes += '<g class="kn kl0" id="kn-' + kId(code) + '" data-ch="' + ch + '">' + sh + '<text x="' + b[0] + '" y="' + (b[1] + 1) + '">' + ch + '</text></g>';
+    nodes += '<g class="kn kl0" id="kn-' + kId(code) + '" data-ch="' + ch + '"><circle class="hit" cx="' + b[0] + '" cy="' + b[1] + '" r="25"/>' + sh + '<text x="' + b[0] + '" y="' + (b[1] + 1) + '">' + ch + '</text></g>';
   });
   els.kTree.innerHTML = '<svg viewBox="0 0 416 372" role="img" aria-label="Albero del codice Morse: dalla partenza in alto, a destra le lettere che cominciano col punto, a sinistra quelle che cominciano con la linea; i cerchi sono punti e le barre linee">' +
     edges + '<circle class="kroot" id="kn-r" cx="' + r[0] + '" cy="' + r[1] + '" r="6"/><text class="klab" x="' + r[0] + '" y="' + (r[1] - 15) + '">inizio</text>' +
@@ -3182,7 +3210,12 @@ function kHi(code, bad) {
   if (last && KT_POS[MCODE[code]]) last.classList.add(bad ? 'badend' : 'end');
 }
 function kAnimEl(s, plan) { var ch = plan.chars[s.ci].ch; kHiClear(); kHi(MORSE[ch].slice(0, s.ei + 1)); }
-els.kTree.addEventListener('click', function (ev) { var g = ev.target.closest('.kn[data-ch]'); if (g) kShowChar(g.getAttribute('data-ch')); });
+/* the tree is a reference, always live: a tap plays the letter whatever the exercise is doing. After an answer it also
+   stops the automatic move to the next question, so the sound is not cut off (an "Avanti" button appears instead). */
+els.kTree.addEventListener('click', function (ev) {
+  var g = ev.target.closest('.kn[data-ch]'); if (!g) return;
+  kShowChar(g.getAttribute('data-ch'));
+});
 els.kTreeToggle.addEventListener('click', function () { settings.k.tree = !settings.k.tree; settingsChanged('k', false); });
 
 /* ---------- drill ---------- */
@@ -3276,7 +3309,7 @@ function morseShow(c) {
   c.start = performance.now();
   els.qTime.textContent = '0.0 s';
   if (card.mode === 'text') focusInput();
-  if ((rx || card.intro) && kReady()) setTimeout(function () { if (cur.k === c && !c.answered && !c.played && tab === 'k') kPlayCard(c); }, card.intro ? 250 : 350);
+  if ((rx || card.intro) && kReady()) setTimeout(function () { if (cur.k === c && !c.answered && !c.played && tab === 'k' && performance.now() - (KA.treeAt || 0) > 1500) kPlayCard(c); }, card.intro ? 250 : 350);
 }
 function kPlayBtns(on) {
   Array.prototype.forEach.call(els.card.querySelectorAll('.kplay'), function (b) { b.classList.toggle('playing', on); var s = b.querySelector('span'); if (s) s.textContent = on ? 'Sto suonando…' : 'Ascolta di nuovo'; });
@@ -3353,12 +3386,20 @@ function kPush(e) {
   c.input = s;
   kRenderOut();
 }
+/* dot and dash answer when the finger goes down, not when it comes up: no delay between the tap and the sound */
+var kTapAt = 0;
+els.kKeys.addEventListener('pointerdown', function (ev) {
+  var b = ev.target.closest('button[data-e]'); if (!b || (ev.button && ev.pointerType === 'mouse')) return;
+  var c = cur.k; if (!c || c.answered) return;
+  kTapAt = performance.now();
+  var e = b.getAttribute('data-e'); kBeep(e); kPush(e);
+});
 els.kPad.addEventListener('click', function (ev) {
   var b = ev.target.closest('button[data-e]'); if (!b) return;
   var e = b.getAttribute('data-e');
   if (e === 'enter') { kSubmit({}); return; }
   var c = cur.k; if (!c || c.answered) return;
-  if (e === '.' || e === '-') kBeep(e);
+  if (e === '.' || e === '-') { if (performance.now() - kTapAt < 800) return; kBeep(e); }   /* already taken on the way down (a click alone comes from the keyboard) */
   kPush(e);
 });
 /* straight key: a press shorter than the threshold is a dot, longer a dash; a pause closes the letter (and a longer one the word) */
@@ -3506,7 +3547,14 @@ function kShowFeedback(c, o) {
   var bn = document.getElementById('btnNext');
   if (bn) bn.addEventListener('click', advance);
   kApplyAnswerHi(c);
-  if (autoGo) autoTimer = setTimeout(advance, card.intro ? 1600 : card.srs ? (c.g === 3 ? 800 : 1300) : 1800);
+  /* after sending a letter you hear how it should sound, with its path on the tree (once your own signs have finished) */
+  var wait = 0;
+  if (card.srs && card.dir === 'tx' && kReady()) {
+    var lag = Math.max(0, (KA.beepEnd || 0) - KA.ctx.currentTime) * 1000 + 300;
+    KA.afterT = setTimeout(function () { if (cur.k === c && tab === 'k') kPlay(card.ch, kAnimEl, function () { if (cur.k === c) kApplyAnswerHi(c); }); }, lag);
+    wait = lag + kPlan(card.ch).total * 1000 + 450;
+  }
+  if (autoGo) autoTimer = setTimeout(advance, Math.max(wait, card.intro ? 1600 : card.srs ? (c.g === 3 ? 800 : 1300) : 1800));
 }
 
 /* ---------- side: path, translator, progress ---------- */
@@ -3532,6 +3580,13 @@ function renderMorseSide() {
   kTreeLevels();
 }
 function kShowChar(ch) {
+  KA.treeAt = performance.now();
+  var c = cur.k;
+  if (tab === 'k' && c && c.answered) {
+    clearTimeout(autoTimer);
+    var fa = els.fb.querySelector('.fb-actions');
+    if (fa && !document.getElementById('btnNext')) { fa.insertAdjacentHTML('beforeend', '<button type="button" class="btn primary small" id="btnNext">Avanti ↵</button>'); document.getElementById('btnNext').addEventListener('click', advance); }
+  }
   kSel = ch;
   var code = MORSE[ch], mi = kMirror(ch);
   els.kDetail.innerHTML = '<b>' + ch + '</b> ' + kCodeHTML(code) + ' · si sente <b>' + kSay(code) + '</b>. ' + kPathText(ch) + (mi ? ' Il suo opposto è ' + mi + '.' : '') +
