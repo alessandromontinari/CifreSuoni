@@ -352,6 +352,10 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .xgrid .ic { padding: 7px 2px; }
 .xgrid .ic small { font-size: .62rem; }
 .xgrid .ic b sup { font-size: .72em; line-height: 0; }
+/* a green dot on the tabs whose goal of the day is done */
+.tabs button { position: relative; }
+.tabs button.done::after { content: ""; position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--verde); }
+.streak .sbar[hidden] { display: none; }
 /* four tabs, practice choice */
 .tabs button .tl-s { display: none; }
 .sel { height: 36px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: .88rem; font-weight: 600; padding: 0 30px 0 11px; min-width: 0; max-width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none;
@@ -503,7 +507,7 @@ details.set[open] summary::after { transform: rotate(-135deg); }
     <span class="sbar" aria-hidden="true"><i id="stFill"></i></span>
     <span class="st-s" id="stStreak"></span>
     <span class="sdots" id="stDots" aria-hidden="true"></span>
-    <select id="goalSel" class="sel" aria-label="Obiettivo giornaliero"><option value="5">5 min al giorno</option><option value="10">10 min al giorno</option><option value="15">15 min al giorno</option><option value="20">20 min al giorno</option></select>
+    <select id="goalSel" class="sel" aria-label="Obiettivo giornaliero di questa scheda"><option value="0">Nessun obiettivo</option><option value="3">3 min al giorno</option><option value="5">5 min al giorno</option><option value="10">10 min al giorno</option><option value="15">15 min al giorno</option><option value="20">20 min al giorno</option></select>
   </div>
 
   <main class="grid">
@@ -763,6 +767,10 @@ details.set[open] summary::after { transform: rotate(-135deg); }
               <div class="seg" id="kVol"><button type="button" data-v="0.25">Basso</button><button type="button" data-v="0.5">Medio</button><button type="button" data-v="0.9">Alto</button></div>
             </div>
             <p class="set-h">Trasmissione</p>
+            <div class="set-row"><span>Velocità dei tuoi segni (parole al minuto)</span>
+              <div class="seg" id="kTx"><button type="button" data-v="6">6</button><button type="button" data-v="8">8</button><button type="button" data-v="10">10</button><button type="button" data-v="12">12</button><button type="button" data-v="15">15</button><button type="button" data-v="18">18</button></div>
+            </div>
+            <p class="note" id="kTxNote" style="margin:0"></p>
             <div class="set-row"><span>Tasto</span>
               <div class="seg" id="kKeyMode"><button type="button" data-s="two">Punto e linea</button><button type="button" data-s="one">Tasto unico</button></div>
             </div>
@@ -1501,8 +1509,8 @@ function defaultSettings() {
   for (var e = 2; e <= 20; e++) pows[e] = true;
   return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, rad: true, radr: true, frac: true, pot: false, potr: false, nor: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memCap: 10, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
     p: { unlock: false, sc0: false, off: {}, speed: 1 },
-    k: { mode: 'let', dir: 'both', wpm: 18, eff: 8, tone: 600, vol: 0.5, key: 'two', aid: 'new', nums: false, unlock: false, tree: true },
-    auto: true, pad: coarse, goal: 10 };
+    k: { mode: 'let', dir: 'both', tx: 10, wpm: 18, eff: 8, tone: 600, vol: 0.5, key: 'two', aid: 'new', nums: false, unlock: false, tree: true },
+    auto: true, pad: coarse, goals: { t: 5, v: 5, p: 5, k: 5 } };
 }
 var data = { v: 1, a: { u: 0, c: {} }, p: { u: 0, c: {}, w: {}, pmax: 1 }, k: { u: 0, c: {} }, m: { u: 0, s: defaultSettings(), st: { days: {}, kinds: {} } } };
 var STATE = { a: new Map(), p: new Map(), k: new Map() };
@@ -1550,6 +1558,7 @@ function mergeSettings(s) {
     if (['let', 'word', 'msg'].indexOf(s.k.mode) >= 0) d.k.mode = s.k.mode;
     if (['both', 'rx', 'tx'].indexOf(s.k.dir) >= 0) d.k.dir = s.k.dir;
     if ([12, 15, 18, 20, 25].indexOf(s.k.wpm) >= 0) d.k.wpm = s.k.wpm;
+    if ([6, 8, 10, 12, 15, 18].indexOf(s.k.tx) >= 0) d.k.tx = s.k.tx;
     if ([0, 5, 8, 10, 12].indexOf(s.k.eff) >= 0) d.k.eff = s.k.eff;
     if ([500, 600, 700, 800].indexOf(s.k.tone) >= 0) d.k.tone = s.k.tone;
     if ([0.25, 0.5, 0.9].indexOf(s.k.vol) >= 0) d.k.vol = s.k.vol;
@@ -1559,7 +1568,7 @@ function mergeSettings(s) {
   }
   if (typeof s.auto === 'boolean') d.auto = s.auto;
   if (typeof s.pad === 'boolean') d.pad = s.pad;
-  if ([5, 10, 15, 20].indexOf(s.goal) >= 0) d.goal = s.goal;
+  if (s.goals && typeof s.goals === 'object') ['t', 'v', 'p', 'k'].forEach(function (x) { if ([0, 3, 5, 10, 15, 20].indexOf(s.goals[x]) >= 0) d.goals[x] = s.goals[x]; });
   return d;
 }
 function adoptSection(sec, obj) {
@@ -2790,24 +2799,29 @@ els.pTry.addEventListener('input', function () {
   var e = phonEncode(v, phonOpt());
   els.pTryOut.innerHTML = breakdownHTML(e, true) + ruleNotes(e, 3).map(function (n) { return '<p class="note" style="margin:6px 0 0">' + n + '</p>'; }).join('');
 });
-/* ---------- daily goal and streak: minutes of answers per day, over all the tabs ---------- */
-function dayMinutes(dk) { var d = data.m.st.days[dk], ms = 0; if (d) Object.keys(d).forEach(function (k) { if (Array.isArray(d[k])) ms += +d[k][2] || 0; }); return ms / 60000; }
-var goalWasDone = null;
+/* ---------- daily goal and streak, one per tab: minutes of answers per day in the tab in view ---------- */
+var DAY_KEYS = { t: ['t', 'z', 'a'], v: ['v', 'zv'], p: ['p'], k: ['k'] }, TAB_NAME = { t: 'Tabelline', v: 'Inverse e potenze', p: 'Fonetica', k: 'Morse' };
+function dayMinutes(dk, t) { var d = data.m.st.days[dk], ms = 0; if (d) DAY_KEYS[t].forEach(function (k) { if (Array.isArray(d[k])) ms += +d[k][2] || 0; }); return ms / 60000; }
+function goalOf(t) { var g = settings.goals && settings.goals[t]; return typeof g === 'number' ? g : 5; }
+var goalWasDone = {};
 function renderStreak() {
-  var goal = settings.goal || 10, now = Date.now(), today = dayMinutes(dayKey(now)), done = today >= goal, dots = '', streak = 0;
-  for (var i = 13; i >= 0; i--) { var m = dayMinutes(dayKey(now - i * 86400000)); dots += '<i class="' + (m >= goal ? 'f' : m >= 0.5 ? 'h' : '') + '"></i>'; }
-  for (var j = done ? 0 : 1; j < 400; j++) { if (dayMinutes(dayKey(now - j * 86400000)) >= goal) streak++; else break; }
-  var st = document.getElementById('streak');
+  var now = Date.now(), tk = dayKey(now);
+  TABS.forEach(function (x) { var g = goalOf(x); els['tab-' + x].classList.toggle('done', g > 0 && dayMinutes(tk, x) >= g); });
+  var goal = goalOf(tab), today = dayMinutes(tk, tab), bar = goal || 5, done = goal > 0 && today >= goal, dots = '', streak = 0;
+  for (var i = 13; i >= 0; i--) { var m = dayMinutes(dayKey(now - i * 86400000), tab); dots += '<i class="' + (m >= bar ? 'f' : m >= 0.5 ? 'h' : '') + '"></i>'; }
+  if (goal) for (var j = done ? 0 : 1; j < 400; j++) { if (dayMinutes(dayKey(now - j * 86400000), tab) >= goal) streak++; else break; }
+  var st = document.getElementById('streak'), mins = today < 10 ? today.toFixed(1).replace('.', ',') : Math.round(today);
   st.classList.toggle('done', done);
-  document.getElementById('stToday').innerHTML = 'Oggi <b>' + (today < 10 ? today.toFixed(1).replace('.', ',') : Math.round(today)) + '</b> di ' + goal + ' min' + (done ? ' ✓' : '');
-  document.getElementById('stFill').style.width = Math.min(100, today / goal * 100).toFixed(0) + '%';
+  document.getElementById('stToday').innerHTML = TAB_NAME[tab] + ', oggi <b>' + mins + '</b>' + (goal ? ' di ' + goal : '') + ' min' + (done ? ' ✓' : '');
+  document.getElementById('stFill').parentNode.hidden = !goal;
+  document.getElementById('stFill').style.width = Math.min(100, today / bar * 100).toFixed(0) + '%';
   document.getElementById('stStreak').innerHTML = streak ? '<b>' + streak + '</b> ' + (streak === 1 ? 'giorno' : 'giorni') + ' di fila' : 'ultime 2 settimane';
   document.getElementById('stDots').innerHTML = dots;
   var sel = document.getElementById('goalSel'); if (sel.value !== String(goal)) sel.value = String(goal);
-  if (goalWasDone === false && done) { els.bannerText.innerHTML = '<b>Obiettivo di oggi raggiunto</b>: ' + goal + ' minuti. Pochi minuti tutti i giorni fissano più di una sessione lunga ogni tanto.'; els.banner.hidden = false; }
-  goalWasDone = done;
+  if (goalWasDone[tab] === false && done) { els.bannerText.innerHTML = '<b>Obiettivo di oggi raggiunto per ' + TAB_NAME[tab] + '</b>: ' + goal + ' minuti. Pochi minuti tutti i giorni fissano più di una sessione lunga ogni tanto.'; els.banner.hidden = false; }
+  goalWasDone[tab] = done;
 }
-document.getElementById('goalSel').addEventListener('change', function () { settings.goal = +this.value; goalWasDone = null; Store.mark('m'); renderStreak(); });
+document.getElementById('goalSel').addEventListener('change', function () { settings.goals[tab] = +this.value; delete goalWasDone[tab]; Store.mark('m'); renderStreak(); });
 function renderAll() {
   renderStreak();
   renderScore();
@@ -2843,7 +2857,8 @@ function syncSettingsUI() {
     return '<label class="check' + (dis ? ' dis' : '') + '" for="lvc' + lv.n + '"><input type="checkbox" id="lvc' + lv.n + '" data-l="' + lv.n + '"' + (!P.off[lv.n] && !dis ? ' checked' : '') + (dis ? ' disabled' : '') + '> ' + lv.n + ' · ' + esc(lv.name) + (dis ? ' (bloccato)' : '') + '</label>';
   }).join('');
   setSegS(els.kModeSeg, 'data-m', K.mode); if (els.kDir.value !== K.dir) els.kDir.value = K.dir;
-  setSeg(els.kWpm, K.wpm); setSeg(els.kEff, K.eff); setSeg(els.kTone, K.tone); setSeg(els.kVol, K.vol);
+  setSeg(els.kWpm, K.wpm); setSeg(document.getElementById('kTx'), K.tx);
+  document.getElementById('kTxNote').textContent = 'È la velocità a cui suonano i punti e le linee che batti tu: un punto dura ' + Math.round(1200 / K.tx) + ' ms, una linea ' + Math.round(3600 / K.tx) + ' ms. Se batti un segno mentre il precedente sta ancora suonando, parte subito dopo con la pausa giusta: per un ritmo regolare batti a tempo con il suono, senza aspettare il silenzio. Tenendo premuto, il segno si ripete.'; setSeg(els.kEff, K.eff); setSeg(els.kTone, K.tone); setSeg(els.kVol, K.vol);
   setSegS(els.kKeyMode, 'data-s', K.key); setSegS(els.kAid, 'data-s', K.aid);
   els.kNums.checked = K.nums; els.kUnlock.checked = K.unlock;
   var u = Math.round(1200 / K.wpm);
@@ -3131,11 +3146,11 @@ function kBeep(e) {
   var ctx = kCtx(); if (!ctx) return;
   kStop();
   try {
-    var u = 1.2 / settings.k.wpm, d = e === '.' ? u : 3 * u, now = ctx.currentTime, t0 = Math.max(now, (KA.beepEnd || 0) + u), V = settings.k.vol * 0.6;
-    if (t0 - now > 0.7) t0 = now;
+    var u = 1.2 / (settings.k.tx || 10), d = e === '.' ? u : 3 * u, now = ctx.currentTime, t0 = Math.max(now, (KA.beepEnd || 0) + u), V = settings.k.vol * 0.6;
+    if (t0 - now > 4 * u + 0.2) t0 = now;   /* far too many taps ahead: do not let the sound fall behind the finger */
     var osc = ctx.createOscillator(), g = ctx.createGain();
     osc.type = 'sine'; osc.frequency.value = settings.k.tone;
-    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(V, t0 + 0.004); g.gain.setValueAtTime(V, t0 + d - 0.004); g.gain.linearRampToValueAtTime(0, t0 + d);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(V, t0 + 0.006); g.gain.setValueAtTime(V, t0 + d - 0.006); g.gain.linearRampToValueAtTime(0, t0 + d);   /* soft edges: no click at the start and end of a sign */
     osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(t0 + d + 0.02);
     KA.beepEnd = t0 + d;
     var rec = { osc: osc, gain: g }; (KA.beeps = KA.beeps || []).push(rec);
@@ -3385,6 +3400,7 @@ function kPush(e) {
   else return;
   c.input = s;
   kRenderOut();
+  return true;
 }
 /* dot and dash answer when the finger goes down, not when it comes up: no delay between the tap and the sound */
 var kTapAt = 0;
@@ -3393,7 +3409,22 @@ els.kKeys.addEventListener('pointerdown', function (ev) {
   var c = cur.k; if (!c || c.answered) return;
   kTapAt = performance.now();
   var e = b.getAttribute('data-e'); kBeep(e); kPush(e);
+  kRepStop(); kRep.e = e; kRepNext(true);
 });
+/* finger held down: the sign repeats with exact timing, like on a paddle */
+var kRep = { e: null, t: null };
+function kRepStop() { clearTimeout(kRep.t); kRep.e = null; }
+function kRepNext(first) {
+  if (!kRep.e || !KA.ctx) return;
+  /* the first repeat only after a real hold (not a slow tap); the following ones in step with the sound */
+  var u = 1.2 / (settings.k.tx || 10), wait = Math.max(first ? 0.3 : 0.02, (KA.beepEnd || 0) - KA.ctx.currentTime + u * 0.4);
+  kRep.t = setTimeout(function () {
+    var c = cur.k; if (!kRep.e || !c || c.answered || tab !== 'k') { kRepStop(); return; }
+    if (kPush(kRep.e)) { kBeep(kRep.e); kRepNext(); } else kRepStop();
+  }, wait * 1000);
+}
+['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { els.kKeys.addEventListener(n, kRepStop); });
+els.kKeys.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
 els.kPad.addEventListener('click', function (ev) {
   var b = ev.target.closest('button[data-e]'); if (!b) return;
   var e = b.getAttribute('data-e');
@@ -3403,7 +3434,7 @@ els.kPad.addEventListener('click', function (ev) {
   kPush(e);
 });
 /* straight key: a press shorter than the threshold is a dot, longer a dash; a pause closes the letter (and a longer one the word) */
-function kThr() { return Math.max(200, 2600 / settings.k.wpm); }
+function kThr() { return Math.max(200, 2600 / (settings.k.tx || 10)); }
 function kStraightDown() {
   var c = cur.k; if (!c || !c.card || c.card.mode !== 'key' || c.answered || KS.down) return;
   clearTimeout(KS.gapT); clearTimeout(KS.wordT);
@@ -3491,6 +3522,11 @@ function kSubmit(opt) {
     if (c.replays && g > 2) g = 2;
     var prev = STATE.k.get(card.key);
     o = schedule(prev, g, nowMin(), ms); STATE.k.set(card.key, o); c.wasNew = !prev;
+    /* a swap counts against both letters: heard R and answered C (or asked for R and keyed C) → C comes back too, in the same direction */
+    if (!res.ok && res.shown) {
+      var och = card.dir === 'rx' ? res.shown : MCODE[res.shown], ok2 = och && och !== card.ch && MORSE[och] ? card.kind + ':' + och : null, po = ok2 ? STATE.k.get(ok2) : null;
+      if (po) { STATE.k.set(ok2, schedule(po, 0, nowMin(), po.t || ms)); c.alsoBad = och; }
+    }
     RECENT.k.push({ key: card.key, fact: card.fact }); if (RECENT.k.length > 8) RECENT.k.shift();
   }
   c.answered = true; c.res = res; c.g = g; c.ms = ms;
@@ -3534,6 +3570,7 @@ function kShowFeedback(c, o) {
     }
     h += '<div class="tipbox"><span class="lab">Come ricordarla</span><p>' + card.hints[0] + '</p></div>';
     nl = c.wasNew && c.g === 3 ? 'La sapevi già: la rivedrai ' + nextLabel(o.i) + '.' : 'La rivedrai ' + nextLabel(o.i) + '.';
+    if (c.alsoBad) nl += ' Torna presto anche la <b>' + c.alsoBad + '</b>: le hai scambiate.';
   } else {
     h = '<div class="verdict g' + (ok ? 3 : 0) + '"><strong>' + (res.dunno ? 'Da imparare' : ok ? 'Giusto' : 'Sbagliato') + '</strong><span class="mono">' + fmtSec(c.ms) + '</span></div>';
     h += '<div class="kans">' + kTextHTML(card.text) + '</div><p class="next" style="margin:0">' + replay.trim() + '</p>';
@@ -3620,6 +3657,7 @@ els.kModeSeg.addEventListener('click', function (ev) {
   settingsChanged('k', true);
 });
 els.kDir.addEventListener('change', function () { settings.k.dir = els.kDir.value; cur.k = null; clearTimeout(autoTimer); settingsChanged('k', true); });
+document.getElementById('kTx').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; settings.k.tx = parseFloat(b.getAttribute('data-v')); settingsChanged('k', false); kCtx(); kBeep('.'); kBeep('-'); kBeep('.'); });
 [['kWpm', 'wpm'], ['kEff', 'eff'], ['kTone', 'tone'], ['kVol', 'vol']].forEach(function (p) {
   els[p[0]].addEventListener('click', function (ev) {
     var b = ev.target.closest('button'); if (!b) return;
