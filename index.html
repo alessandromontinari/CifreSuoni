@@ -356,6 +356,47 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 .tabs button { position: relative; }
 .tabs button.done::after { content: ""; position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--verde); }
 .streak .sbar[hidden] { display: none; }
+/* giochi */
+.gbox { display: flex; flex-direction: column; gap: 10px; }
+.gbar { display: flex; gap: 8px 10px; flex-wrap: wrap; align-items: center; }
+.gcard { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.ghead { display: flex; align-items: baseline; gap: 10px; }
+.ghead .tag { flex: 1; min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; }
+.gcount { font-size: .8rem; color: var(--muted); }
+.gtime { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 1.05rem; }
+.gboard { position: relative; display: grid; width: 100%; max-width: 440px; margin: 0 auto; border: 2.5px solid #1E2433; border-radius: 6px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.gboard .gc { aspect-ratio: 1; border: 0; padding: 0; margin: 0; display: grid; place-items: center; cursor: pointer; position: relative; color: #1E2433; -webkit-tap-highlight-color: transparent; min-width: 0; }
+.gboard .gc svg { width: 62%; height: 62%; pointer-events: none; }
+.gq .gc { box-shadow: inset 0 0 0 .5px rgba(30, 36, 51, .28); }
+.gq .gc.bt { border-top: 2px solid #1E2433; } .gq .gc.bb { border-bottom: 2px solid #1E2433; } .gq .gc.bl { border-left: 2px solid #1E2433; } .gq .gc.br { border-right: 2px solid #1E2433; }
+.gq .gc .gx { font-style: normal; font-size: clamp(.8rem, 4vw, 1.15rem); color: rgba(30, 36, 51, .55); pointer-events: none; }
+.gq .gc.bad { color: #C9301F; background-image: repeating-linear-gradient(45deg, rgba(201, 48, 31, .22) 0 4px, transparent 4px 9px) !important; }
+.gt { background: #FFFFFF; }
+.gt .gc { background: #FFFFFF; box-shadow: inset 0 0 0 .5px #C7CEDC; }
+.gt .gc.fix { background: #E9EDF4; cursor: default; }
+.gt .gc.bad { background-image: repeating-linear-gradient(45deg, rgba(201, 48, 31, .2) 0 4px, transparent 4px 9px); }
+.gsign { position: absolute; transform: translate(-50%, -50%); width: 17px; height: 17px; border-radius: 50%; background: #FFFFFF; border: 1px solid #9AA4B8; color: #1E2433; font-weight: 800; font-size: 12px; line-height: 15px; text-align: center; pointer-events: none; z-index: 2; font-family: var(--f-body); }
+.gsign.bad { background: #C9301F; border-color: #C9301F; color: #FFFFFF; }
+.gboard .gc.hl { outline: 3px solid var(--blu); outline-offset: -3px; z-index: 1; }
+.gboard .gc.hinted::after { content: ""; position: absolute; right: 3px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--blu); }
+.gboard.solved { border-color: var(--verde); }
+.gboard.solved .gc { cursor: default; }
+.gboard.gwait { aspect-ratio: 1; display: grid; place-items: center; border-color: var(--line); }
+.gboard.gwait p { color: var(--muted); font-size: .9rem; margin: 0; }
+.gmsg { margin: 0; min-height: 1.2em; font-size: .86rem; color: var(--blu); text-align: center; }
+.gmsg:empty { display: none; }
+.gctl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.gctl button { height: 44px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 600; font-size: .86rem; cursor: pointer; padding: 0 4px; }
+.gctl button.primary { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.gctl button:disabled { opacity: .45; cursor: default; }
+.gctl button[hidden] { display: none; }
+.gdone { background: var(--verde-soft); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.gdone p { margin: 0; font-size: .9rem; }
+.gdone-v { display: flex; align-items: baseline; gap: 12px; }
+.gdone-v strong { font-family: var(--f-display); font-weight: 800; font-size: 1.6rem; color: var(--verde); }
+.gdone-v .mono { font-family: var(--f-mono); font-weight: 600; }
+.grules p { margin: 0 0 8px; font-size: .9rem; }
+.gstat { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .86rem; }
 /* four tabs, practice choice */
 .tabs button .tl-s { display: none; }
 .sel { height: 36px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: .88rem; font-weight: 600; padding: 0 30px 0 11px; min-width: 0; max-width: 100%; cursor: pointer; -webkit-appearance: none; appearance: none;
@@ -470,10 +511,52 @@ details.set[open] summary::after { transform: rotate(-135deg); }
 
 @media (max-width: 560px) {
   .tabs { width: 100%; }
-  .tabs button { flex: 1; padding: 8px 6px; font-size: .88rem; }
+  .tabs button { flex: 1; padding: 8px 3px; font-size: .82rem; min-width: 0; }
   .tabs button .tl-l { display: none; }
   .tabs button .tl-s { display: inline; }
 }
+
+.gpick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.gpick button { border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 7px 4px; font-size: .8rem; font-weight: 600; cursor: pointer; line-height: 1.15; }
+.gpick button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+@media (max-width: 430px) { .gpick { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Percorso */
+.gz { background: #FFFFFF; }
+.gz .gc { background: #FFFFFF; box-shadow: inset 0 0 0 .5px #C7CEDC; }
+.gz .gc.on { background: #FCE3CF; }
+.gz .gc.wt { border-top: 4px solid #1E2433; } .gz .gc.wb { border-bottom: 4px solid #1E2433; } .gz .gc.wl { border-left: 4px solid #1E2433; } .gz .gc.wr { border-right: 4px solid #1E2433; }
+.gz .znum { position: relative; z-index: 3; width: 64%; aspect-ratio: 1; border-radius: 50%; background: #1E2433; color: #FFFFFF; display: grid; place-items: center; font-weight: 800; font-size: clamp(.8rem, 4.2vw, 1.15rem); font-family: var(--f-body); pointer-events: none; }
+.gz .zline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.gz .zline polyline { fill: none; stroke: #E8731C; stroke-width: .36; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+.gz.solved .zline polyline { stroke: var(--verde); }
+.gz.solved .gc.on { background: var(--verde-soft); }
+/* Mini sudoku and Gabbie */
+.gs, .gn { background: #FFFFFF; }
+.gs .gc, .gn .gc { background: #FFFFFF; box-shadow: inset 0 0 0 .5px #C7CEDC; font-family: var(--f-body); }
+.gs .gc.bt { border-top: 2.5px solid #1E2433; } .gs .gc.bl { border-left: 2.5px solid #1E2433; }
+.gn .gc.bt { border-top: 2px solid #1E2433; } .gn .gc.bb { border-bottom: 2px solid #1E2433; } .gn .gc.bl { border-left: 2px solid #1E2433; } .gn .gc.br { border-right: 2px solid #1E2433; }
+.gs .gc.fix { background: #E9EDF4; cursor: pointer; }
+.gs .gc.fix .gd { color: #1E2433; }
+.gs .gc.user .gd, .gn .gc.user .gd { color: #2D52C8; }
+.gboard .gc.rel { background: #F1F4FA; }
+.gboard .gc.same { background: #DCE5FA; }
+.gboard .gc.gsel { background: #C9D7FA; }
+.gs .gc.bad .gd, .gn .gc.bad .gd { color: #C9301F; }
+.gs .gc.bad, .gn .gc.bad { background-image: repeating-linear-gradient(45deg, rgba(201, 48, 31, .14) 0 4px, transparent 4px 9px); }
+.gd { font-weight: 700; font-size: clamp(1.05rem, 6vw, 1.6rem); pointer-events: none; }
+.gn .gd { font-size: clamp(1rem, 5.5vw, 1.5rem); padding-top: 8%; }
+.gnotes { position: absolute; inset: 3px; display: grid; grid-template-columns: repeat(3, 1fr); pointer-events: none; }
+.gn .gnotes { inset: 30% 3px 3px; }
+.gnotes i { font-style: normal; font-size: clamp(.5rem, 2.4vw, .72rem); color: #5B6478; display: grid; place-items: center; line-height: 1; }
+.klab { position: absolute; left: 3px; top: 2px; font-size: clamp(.55rem, 2.6vw, .78rem); font-weight: 700; color: #1E2433; pointer-events: none; line-height: 1; z-index: 2; }
+.klab.bad { color: #FFFFFF; background: #C9301F; border-radius: 3px; padding: 1px 2px; }
+.gboard.solved .gc.gsel, .gboard.solved .gc.rel, .gboard.solved .gc.same { background: #FFFFFF; }
+.gpad { display: grid; gap: 6px; max-width: 440px; width: 100%; margin: 0 auto; }
+.gpad[hidden] { display: none; }
+.gpad button { height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 700; font-size: 1.1rem; cursor: pointer; padding: 0; min-width: 0; }
+.gpad button.gnote { font-size: .78rem; }
+.gpad button.gnote[aria-pressed="true"] { background: var(--blu); color: #FFFFFF; border-color: var(--blu); }
+.gs .gc.fix.rel { background: #E4E9F2; }
 
 @media (max-width: 420px) {
   .brand h1 { font-size: 1.85rem; }
@@ -499,6 +582,7 @@ details.set[open] summary::after { transform: rotate(-135deg); }
       <button type="button" role="tab" id="tab-v" aria-selected="false" aria-label="Inverse e potenze di 2"><span class="tl-l">Inverse e potenze</span><span class="tl-s">1/x · 2ⁿ</span></button>
       <button type="button" role="tab" id="tab-p" aria-selected="false">Fonetica</button>
       <button type="button" role="tab" id="tab-k" aria-selected="false">Morse</button>
+      <button type="button" role="tab" id="tab-g" aria-selected="false">Giochi</button>
     </nav>
   </header>
 
@@ -533,7 +617,23 @@ details.set[open] summary::after { transform: rotate(-135deg); }
         <div class="seg" id="kModeSeg" role="group" aria-label="Cosa allenare"><button type="button" data-m="let">Lettere</button><button type="button" data-m="word">Parole</button><button type="button" data-m="msg">Messaggi</button></div>
         <select id="kDir" class="sel" aria-label="Ascolto o trasmissione"><option value="both">Ascolta e trasmetti</option><option value="rx">Solo ascolto</option><option value="tx">Solo trasmissione</option></select>
       </div>
-      <div class="score">
+      <section class="gbox" id="gameBox" aria-label="Giochi" hidden>
+        <div class="gbar">
+          <div class="gpick" id="gGameSeg" role="group" aria-label="Gioco"><button type="button" data-g="q">Regine</button><button type="button" data-g="t">Sole e luna</button><button type="button" data-g="z">Percorso</button><button type="button" data-g="s">Mini sudoku</button><button type="button" data-g="n">Gabbie</button></div>
+          <div class="seg" id="gModeSeg" role="group" aria-label="Quale puzzle"><button type="button" data-m="day">Del giorno</button><button type="button" data-m="free">Altri</button></div>
+          <div class="seg" id="gLevel" role="group" aria-label="Difficoltà" hidden><button type="button" data-l="1">Facile</button><button type="button" data-l="2">Medio</button><button type="button" data-l="3">Difficile</button></div>
+          <select id="gSize" class="sel" aria-label="Grandezza" hidden><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option></select>
+        </div>
+        <div class="gcard">
+          <div class="ghead"><span class="tag" id="gTitle"></span><span class="gcount" id="gCount"></span><span class="gtime" id="gTime">0:00</span></div>
+          <div class="gboard" id="gBoard"></div>
+          <p class="gmsg" id="gMsg" aria-live="polite"></p>
+          <div class="gpad" id="gPad" hidden></div>
+          <div class="gdone" id="gDone" hidden></div>
+          <div class="gctl"><button type="button" id="gUndo">Annulla</button><button type="button" id="gClear">Ricomincia</button><button type="button" id="gHint">Aiuto</button><button type="button" class="primary" id="gNew">Nuovo</button></div>
+        </div>
+      </section>
+      <div class="score" id="scoreRow">
         <div class="sc"><span id="scL1">Oggi</span><b id="scN">0</b></div>
         <div class="sc"><span id="scL2">Giuste</span><b id="scAcc">–</b></div>
         <div class="sc"><span id="scL3">Tempo</span><b id="scAvg">–</b></div>
@@ -784,6 +884,18 @@ details.set[open] summary::after { transform: rotate(-135deg); }
             <div class="reset" id="kReset"></div>
           </div>
         </details>
+      </div>
+
+      <div id="side-g" class="side" hidden>
+        <section class="panel" aria-label="Regole">
+          <h2 id="gRulesH">Come si gioca</h2>
+          <div class="grules" id="gRules"></div>
+        </section>
+        <section class="panel" aria-label="Risultati dei giochi">
+          <h2>I tuoi risultati</h2>
+          <div id="gStats"></div>
+          <div class="reset" id="gReset"></div>
+        </section>
       </div>
 
       <section class="panel" aria-label="Cambio telefono">
@@ -1510,9 +1622,9 @@ function defaultSettings() {
   return { a: { nums: nums, invs: invs, pows: pows, mul: true, div: true, inv: true, invr: true, pow: true, powr: false, rad: true, radr: true, frac: true, pot: false, potr: false, nor: false, speed: 1, mode: 'std', vmode: 'std', focus: 'all', memSev: 1, memCap: 10, memReveal: true, memCopy: true, memUnlock: false, memAnn: false },
     p: { unlock: false, sc0: false, off: {}, speed: 1 },
     k: { mode: 'let', dir: 'both', tx: 10, wpm: 18, eff: 8, tone: 600, vol: 0.5, key: 'two', aid: 'new', nums: false, unlock: false, tree: true },
-    auto: true, pad: coarse, goals: { t: 5, v: 5, p: 5, k: 5 } };
+    auto: true, pad: coarse, goals: { t: 5, v: 5, p: 5, k: 5, g: 0 } };
 }
-var data = { v: 1, a: { u: 0, c: {} }, p: { u: 0, c: {}, w: {}, pmax: 1 }, k: { u: 0, c: {} }, m: { u: 0, s: defaultSettings(), st: { days: {}, kinds: {} } } };
+var data = { v: 1, a: { u: 0, c: {} }, p: { u: 0, c: {}, w: {}, pmax: 1 }, k: { u: 0, c: {} }, g: { u: 0, r: {} }, m: { u: 0, s: defaultSettings(), st: { days: {}, kinds: {} } } };
 var STATE = { a: new Map(), p: new Map(), k: new Map() };
 /* memorization: key -> { s: fast answers in a row, n: answers, f: fast answers, b: best ms, t: average ms, d: last answer, h: last fast answer,
    lv: step of the long-term check ladder, due: when the next check is due (minutes) } */
@@ -1568,10 +1680,11 @@ function mergeSettings(s) {
   }
   if (typeof s.auto === 'boolean') d.auto = s.auto;
   if (typeof s.pad === 'boolean') d.pad = s.pad;
-  if (s.goals && typeof s.goals === 'object') ['t', 'v', 'p', 'k'].forEach(function (x) { if ([0, 3, 5, 10, 15, 20].indexOf(s.goals[x]) >= 0) d.goals[x] = s.goals[x]; });
+  if (s.goals && typeof s.goals === 'object') ['t', 'v', 'p', 'k', 'g'].forEach(function (x) { if ([0, 3, 5, 10, 15, 20].indexOf(s.goals[x]) >= 0) d.goals[x] = s.goals[x]; });
   return d;
 }
 function adoptSection(sec, obj) {
+  if (sec === 'g') { data.g = { u: obj.u || 0, r: obj.r && typeof obj.r === 'object' ? obj.r : {} }; return; }
   if (sec === 'm') {
     data.m = { u: obj.u || 0, s: mergeSettings(obj.s), st: obj.st && typeof obj.st === 'object' ? { days: obj.st.days || {}, kinds: obj.st.kinds || {} } : { days: {}, kinds: {} } };
     settings = data.m.s;
@@ -1584,6 +1697,7 @@ function adoptSection(sec, obj) {
   STATE[sec] = map;
 }
 function bodyOf(sec) {
+  if (sec === 'g') return { u: data.g.u, r: data.g.r };
   if (sec === 'm') return { u: data.m.u, s: settings, st: data.m.st };
   var c = {};
   STATE[sec].forEach(function (o, k) { c[k] = packState(o); });
@@ -1593,8 +1707,8 @@ function bodyOf(sec) {
 }
 
 var LS_KEY = 'cifresuoni.v1';
-var SECTIONS = ['a', 'p', 'm', 'k'];
-var DOC = { a: 'arith', p: 'phon', m: 'meta', k: 'morse' };
+var SECTIONS = ['a', 'p', 'm', 'k', 'g'];
+var DOC = { a: 'arith', p: 'phon', m: 'meta', k: 'morse', g: 'games' };
 var Store = {
   kind: 'none', refs: null, dirty: new Set(), timer: null, writing: false,
   loadLocal: function () {
@@ -1607,7 +1721,7 @@ var Store = {
     } catch (e) { this.kind = 'none'; }
   },
   saveLocal: function () {
-    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 1, a: bodyOf('a'), p: bodyOf('p'), m: bodyOf('m'), k: bodyOf('k') })); } catch (e) {}
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ v: 1, a: bodyOf('a'), p: bodyOf('p'), m: bodyOf('m'), k: bodyOf('k'), g: bodyOf('g') })); } catch (e) {}
   },
   mark: function (sec) {
     data[sec].u = Date.now();
@@ -2136,7 +2250,7 @@ function memFactHTML(card) {
 /* ================= UI ================= */
 var $ = function (id) { return document.getElementById(id); };
 var els = {};
-['tab-t', 'tab-v', 'tab-p', 'tab-k', 'scN', 'scAcc', 'scAvg', 'scDue', 'card', 'qView', 'qTag', 'qBadge', 'qTime', 'qText', 'qPrompt', 'ansForm', 'ans', 'qUnit', 'btnGo', 'mc', 'hint', 'btnDunno', 'fb',
+['tab-t', 'tab-v', 'tab-p', 'tab-k', 'tab-g', 'side-g', 'gameBox', 'scoreRow', 'scN', 'scAcc', 'scAvg', 'scDue', 'card', 'qView', 'qTag', 'qBadge', 'qTime', 'qText', 'qPrompt', 'ansForm', 'ans', 'qUnit', 'btnGo', 'mc', 'hint', 'btnDunno', 'fb',
  'emptyState', 'emptyText', 'btnOpenSet', 'banner', 'bannerText', 'bannerClose', 'pad', 'padDot', 'padEnter', 'side-a', 'side-p', 'side-k', 'aSum', 'aKinds', 'aWeak', 'tGrid', 'tDetail', 'iGrid', 'iDetail',
  'setA', 'setV', 'aNums', 'aNumsQuick', 'aMul', 'aDiv', 'aInv', 'aInvr', 'aInvs', 'aInvsQuick', 'aPow', 'aPowr', 'aPows', 'aPowsQuick', 'wGrid', 'wDetail', 'aSpeed', 'aAuto', 'aPad', 'aReset', 'vReset', 'aCommon',
  'pLevels', 'pTable', 'pRules', 'pTry', 'pTryOut', 'pWords', 'pKinds', 'pWeak', 'setP', 'pLevelChecks', 'pUnlock', 'pSc0', 'pSpeed', 'pAuto', 'pPad', 'pReset', 'storeNote', 'pTablePanel',
@@ -2146,12 +2260,12 @@ var els = {};
  'kPathNote', 'kLegend', 'kPath', 'kDetail', 'kTry', 'kTryOut', 'kTryPlay', 'kSum', 'kKinds', 'kWeak', 'setK', 'kWpm', 'kEff', 'kSpeedNote', 'kTone', 'kVol', 'kKeyMode', 'kAid', 'kNums', 'kUnlock', 'kAuto', 'kReset'
 ].forEach(function (id) { els[id] = $(id); });
 
-var TABS = ['t', 'v', 'p', 'k'];
-var SEC = { t: 'a', v: 'a', p: 'p', k: 'k' };
+var TABS = ['t', 'v', 'p', 'k', 'g'];
+var SEC = { t: 'a', v: 'a', p: 'p', k: 'k', g: 'g' };
 var tab = 't';
 try { var savedTab = localStorage.getItem('cifresuoni.tab'); if (savedTab === 'a') tab = 't'; else if (TABS.indexOf(savedTab) >= 0) tab = savedTab; } catch (e) {}
-var cur = { t: null, v: null, p: null, k: null };
-var RECENT = { t: [], v: [], p: [], k: [] };
+var cur = { t: null, v: null, p: null, k: null, g: null };
+var RECENT = { t: [], v: [], p: [], k: [], g: [] };
 var autoTimer = null;
 var HINT_TXT = { num: 'Invio per confermare · “Non lo so” mostra la risposta', digits: 'Scrivi le cifre in ordine, zeri compresi', text: 'Qualsiasi parola va bene, se le consonanti danno il numero giusto', mc: 'Scegli con un clic oppure con i tasti 1–4',
   kl: 'Tocca la lettera o scrivila · spazio per riascoltare', key: 'Pulsanti, oppure tasti ← → e Invio' };
@@ -2168,7 +2282,9 @@ function renderStoreNote() {
 function applyTabUI() {
   TABS.forEach(function (x) { els['tab-' + x].setAttribute('aria-selected', x === tab ? 'true' : 'false'); });
   var ar = isAr(tab);
-  els['side-a'].hidden = !ar; els['side-p'].hidden = tab !== 'p'; els['side-k'].hidden = tab !== 'k';
+  els['side-a'].hidden = !ar; els['side-p'].hidden = tab !== 'p'; els['side-k'].hidden = tab !== 'k'; els['side-g'].hidden = tab !== 'g';
+  var gm = tab === 'g'; els.gameBox.hidden = !gm; els.scoreRow.hidden = gm; els.card.hidden = gm; if (gm) els.pad.hidden = true;
+  if (!gm) gPause();
   els.modeBar.hidden = !ar; els.focusBar.hidden = tab !== 't'; els.kModeBar.hidden = tab !== 'k';
   els.tMapPanel.hidden = tab !== 't'; els.vMapPanel.hidden = tab !== 'v';
   els.setA.hidden = tab !== 't'; els.setV.hidden = tab !== 'v';
@@ -2198,6 +2314,7 @@ TABS.forEach(function (x) { els['tab-' + x].addEventListener('click', function (
 function nextQuestion() {
   clearTimeout(autoTimer);
   if (tab === 'k') { morseNext(); return; }
+  if (tab === 'g') { gameShow(); return; }
   if (memOn()) {
     var mk = memNext();
     if (!mk) { cur[tab] = null; showEmpty(); return; }
@@ -2800,7 +2917,7 @@ els.pTry.addEventListener('input', function () {
   els.pTryOut.innerHTML = breakdownHTML(e, true) + ruleNotes(e, 3).map(function (n) { return '<p class="note" style="margin:6px 0 0">' + n + '</p>'; }).join('');
 });
 /* ---------- daily goal and streak, one per tab: minutes of answers per day in the tab in view ---------- */
-var DAY_KEYS = { t: ['t', 'z', 'a'], v: ['v', 'zv'], p: ['p'], k: ['k'] }, TAB_NAME = { t: 'Tabelline', v: 'Inverse e potenze', p: 'Fonetica', k: 'Morse' };
+var DAY_KEYS = { t: ['t', 'z', 'a'], v: ['v', 'zv'], p: ['p'], k: ['k'], g: ['g'] }, TAB_NAME = { t: 'Tabelline', v: 'Inverse e potenze', p: 'Fonetica', k: 'Morse', g: 'Giochi' };
 function dayMinutes(dk, t) { var d = data.m.st.days[dk], ms = 0; if (d) DAY_KEYS[t].forEach(function (k) { if (Array.isArray(d[k])) ms += +d[k][2] || 0; }); return ms / 60000; }
 function goalOf(t) { var g = settings.goals && settings.goals[t]; return typeof g === 'number' ? g : 5; }
 var goalWasDone = {};
@@ -2824,6 +2941,7 @@ function renderStreak() {
 document.getElementById('goalSel').addEventListener('change', function () { settings.goals[tab] = +this.value; delete goalWasDone[tab]; Store.mark('m'); renderStreak(); });
 function renderAll() {
   renderStreak();
+  if (tab === 'g') { renderGameSide(); return; }
   renderScore();
   if (isAr(tab)) { renderModeBar(); renderArithSide(); }
   else if (tab === 'p') renderPhonSide();
@@ -3704,15 +3822,22 @@ function mergeImport(obj) {
     });
     Object.keys(kinds).forEach(function (k) { var x = kinds[k]; if (Array.isArray(x) && (!data.m.st.kinds[k] || x[0] > data.m.st.kinds[k][0])) data.m.st.kinds[k] = x.slice(0, 3); });
   }
-  Store.mark('a'); Store.mark('p'); Store.mark('k'); Store.mark('m');
+  var og = obj.g && obj.g.r ? obj.g.r : {};
+  Object.keys(og).forEach(function (game) {
+    if (!G_NAME[game] || !og[game]) return;
+    var mine = gRes(game), od = og[game].d || {}, of = og[game].f || {};
+    Object.keys(od).forEach(function (dk) { var x = od[dk]; if (Array.isArray(x) && (!mine.d[dk] || x[0] < mine.d[dk][0])) mine.d[dk] = x.slice(0, 3); });
+    Object.keys(of).forEach(function (k) { var x = of[k], m = mine.f[k]; if (!Array.isArray(x)) return; if (!m || x[0] > m[0]) mine.f[k] = [x[0], m && m[1] && (!x[1] || m[1] < x[1]) ? m[1] : x[1], x[2]]; else if (x[1] && (!m[1] || x[1] < m[1])) m[1] = x[1]; });
+  });
+  Store.mark('a'); Store.mark('p'); Store.mark('k'); Store.mark('g'); Store.mark('m');
   clearTimeout(Store.timer); Store.timer = null; Store.flush();
-  cur = { t: null, v: null, p: null, k: null }; RECENT = { t: [], v: [], p: [], k: [] }; memResetSession();
+  cur = { t: null, v: null, p: null, k: null, g: null }; RECENT = { t: [], v: [], p: [], k: [], g: [] }; memResetSession();
   syncSettingsUI(); applyTabUI(); nextQuestion(); renderAll();
 }
 setupBackup({
   app: 'cifresuoni', title: 'Cifre e Suoni', el: document.getElementById('backupBox'),
   intro: 'Per passare a un altro telefono: esporta qui, mandati il file e importalo nell’app sul telefono nuovo. Il file contiene tutte le sezioni.',
-  build: function () { return { app: 'cifresuoni', v: 1, at: Date.now(), a: bodyOf('a'), p: bodyOf('p'), m: bodyOf('m'), k: bodyOf('k') }; },
+  build: function () { return { app: 'cifresuoni', v: 1, at: Date.now(), a: bodyOf('a'), p: bodyOf('p'), m: bodyOf('m'), k: bodyOf('k'), g: bodyOf('g') }; },
   describe: function (o) {
     var na = o.a && o.a.c ? Object.keys(o.a.c).length : 0, np = o.p && o.p.c ? Object.keys(o.p.c).length : 0, nk = o.k && o.k.c ? Object.keys(o.k.c).length : 0, ans = 0;
     var kinds = o.m && o.m.st && o.m.st.kinds ? o.m.st.kinds : {};
@@ -3721,6 +3846,1127 @@ setupBackup({
   },
   apply: mergeImport
 });
+
+/* ================= Giochi: generators (deterministic from a seed, always with a single solution) ================= */
+function gRng(str) {   /* xmur3 hash → mulberry32 */
+  var h = 1779033703 ^ str.length;
+  for (var i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  var a = (function () { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^= h >>> 16) >>> 0; })();
+  return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gShuffle(a, rnd) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+
+/* ---- Regine: one queen per row, column and colour zone, no two queens touching (not even on a corner) ---- */
+function qPlace(N, rnd) {
+  var col = [], used = [];
+  function go(r) {
+    if (r === N) return true;
+    var cs = gShuffle(Array.from({ length: N }, function (_, i) { return i; }), rnd);
+    for (var k = 0; k < N; k++) { var c = cs[k]; if (used[c] || (r && Math.abs(c - col[r - 1]) <= 1)) continue; used[c] = 1; col[r] = c; if (go(r + 1)) return true; used[c] = 0; }
+    return false;
+  }
+  return go(0) ? col : null;
+}
+function qGrow(N, Q, rnd) {
+  var reg = new Array(N * N).fill(-1), w = [], left = N * N - N;
+  for (var i = 0; i < N; i++) { reg[i * N + Q[i]] = i; var x = rnd(); w.push(0.25 + x); }   /* different growth speeds: zones of different sizes */
+  while (left > 0) {
+    var tot = 0, i2, fr = [];
+    for (i2 = 0; i2 < N; i2++) fr[i2] = [];
+    for (var p = 0; p < N * N; p++) {
+      if (reg[p] !== -1) continue;
+      var r = (p / N) | 0, c = p % N, nb = [];
+      if (r > 0 && reg[p - N] >= 0) nb.push(reg[p - N]);
+      if (r < N - 1 && reg[p + N] >= 0) nb.push(reg[p + N]);
+      if (c > 0 && reg[p - 1] >= 0) nb.push(reg[p - 1]);
+      if (c < N - 1 && reg[p + 1] >= 0) nb.push(reg[p + 1]);
+      nb.forEach(function (g) { if (fr[g].indexOf(p) < 0) fr[g].push(p); });
+    }
+    for (i2 = 0; i2 < N; i2++) if (fr[i2].length) tot += w[i2];
+    var t = rnd() * tot, g = 0;
+    for (i2 = 0; i2 < N; i2++) { if (!fr[i2].length) continue; g = i2; t -= w[i2]; if (t < 0) break; }
+    reg[fr[g][Math.floor(rnd() * fr[g].length)]] = g; left--;
+  }
+  return reg;
+}
+/* number of solutions (stops at limit); other = the first solution different from Q, if asked */
+function qCount(N, reg, limit, Q) {
+  var n = 0, colU = [], regU = [], prev = -9, col = [], other = null;
+  function go(r) {
+    if (r === N) { n++; if (Q && !other && col.some(function (c, i) { return c !== Q[i]; })) other = col.slice(); return; }
+    for (var c = 0; c < N && n < limit; c++) {
+      var g = reg[r * N + c];
+      if (colU[c] || regU[g] || Math.abs(c - prev) <= 1) continue;
+      var sp = prev; colU[c] = regU[g] = 1; prev = c; col[r] = c; go(r + 1); prev = sp; colU[c] = regU[g] = 0;
+    }
+  }
+  go(0);
+  return Q ? { n: n, other: other } : n;
+}
+function qConnected(N, reg, g, without) {
+  var cells = []; reg.forEach(function (x, p) { if (x === g && p !== without) cells.push(p); });
+  if (!cells.length) return false;
+  var seen = {}, st = [cells[0]]; seen[cells[0]] = 1; var k = 1;
+  while (st.length) {
+    var p = st.pop(), r = (p / N) | 0, c = p % N;
+    [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(function (q) {
+      if (q[0] < 0 || q[1] < 0 || q[0] >= N || q[1] >= N) return;
+      var pp = q[0] * N + q[1]; if (pp === without || seen[pp] || reg[pp] !== g) return; seen[pp] = 1; k++; st.push(pp);
+    });
+  }
+  return k === cells.length;
+}
+/* zones grown at random around the queens; while there is another solution, one of its queens is moved into a nearby
+   zone that already holds another of its queens, which rules it out (Q stays valid). */
+function genQueens(N, seed) {
+  var rnd = gRng('regine|' + N + '|' + seed);
+  for (var tries = 0; tries < 200; tries++) {
+    var Q = qPlace(N, rnd); if (!Q) continue;
+    var reg = qGrow(N, Q, rnd), steps = 0, res;
+    while ((res = qCount(N, reg, 2, Q)).n > 1 && steps < 60) {
+      steps++;
+      var O = res.other, inO = {}, moves = [];
+      O.forEach(function (c, r) { inO[reg[r * N + c]] = (inO[reg[r * N + c]] || 0) + 1; });
+      O.forEach(function (c, r) {
+        if (c === Q[r]) return;
+        var p = r * N + c, g = reg[p];
+        [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(function (q) {
+          if (q[0] < 0 || q[1] < 0 || q[0] >= N || q[1] >= N) return;
+          var h = reg[q[0] * N + q[1]]; if (h !== g && inO[h]) moves.push([p, g, h]);
+        });
+      });
+      gShuffle(moves, rnd);
+      var done = false;
+      for (var m = 0; m < moves.length && !done; m++) if (qConnected(N, reg, moves[m][1], moves[m][0])) { reg[moves[m][0]] = moves[m][2]; done = true; }
+      if (!done) break;
+    }
+    if (res.n !== 1) continue;
+    var size = {}, tiny = 0; reg.forEach(function (g) { size[g] = (size[g] || 0) + 1; });
+    var huge = 0; Object.keys(size).forEach(function (g) { if (size[g] < 2) tiny++; if (size[g] > 2.5 * N) huge++; });
+    if (tiny > (N >= 8 ? 1 : 0) || huge) continue;   /* a one-cell zone gives a queen for free; a huge one makes a dull board */
+    var map = {}, k = 0; reg.forEach(function (g) { if (map[g] === undefined) map[g] = k++; });
+    return { N: N, reg: reg.map(function (g) { return map[g]; }), sol: Q.map(function (c, r) { return r * N + c; }), tries: tries + 1 };
+  }
+  return null;
+}
+
+/* ---- Sole e luna: 6×6, three suns and three moons in every row and column, never three alike in a row,
+        = means the two cells are the same, × that they are different ---- */
+var T_N = 6;
+var T_ROWS = (function () {
+  var out = [];
+  for (var m = 0; m < 64; m++) {
+    var a = [], ones = 0, ok = true;
+    for (var i = 0; i < 6; i++) { a.push((m >> i) & 1); ones += a[i]; }
+    if (ones !== 3) continue;
+    for (var j = 2; j < 6; j++) if (a[j] === a[j - 1] && a[j] === a[j - 2]) ok = false;
+    if (ok) out.push(a);
+  }
+  return out;
+})();
+/* clues: giv[cell] = 0|1|undefined; signs: { a: cell, b: cell to the right or below, eq: true|false } */
+function tCount(giv, signs, limit, rnd) {
+  var n = 0, grid = [], sol = null, hs = [], vs = [];
+  for (var r = 0; r < 6; r++) { hs[r] = []; vs[r] = []; }
+  signs.forEach(function (s) { var r = (s.a / 6) | 0, c = s.a % 6; if (s.b === s.a + 1) hs[r].push([c, s.eq]); else vs[r].push([c, s.eq]); });
+  var rows = rnd ? gShuffle(T_ROWS.slice(), rnd) : T_ROWS;
+  function rowOk(r, a) {
+    for (var c = 0; c < 6; c++) { var gv = giv[r * 6 + c]; if (gv !== undefined && gv !== a[c]) return false; }
+    for (var i = 0; i < hs[r].length; i++) { var h = hs[r][i]; if ((a[h[0]] === a[h[0] + 1]) !== h[1]) return false; }
+    if (r > 0) { var up = grid[r - 1]; for (var k = 0; k < vs[r - 1].length; k++) { var v = vs[r - 1][k]; if ((up[v[0]] === a[v[0]]) !== v[1]) return false; } }
+    for (var cc = 0; cc < 6; cc++) {
+      var ones = a[cc]; for (var rr = 0; rr < r; rr++) ones += grid[rr][cc];
+      if (ones > 3 || (r + 1 - ones) > 3) return false;
+      if (r >= 2 && grid[r - 1][cc] === a[cc] && grid[r - 2][cc] === a[cc]) return false;
+    }
+    return true;
+  }
+  function go(r) {
+    if (r === 6) { n++; if (!sol) sol = grid.map(function (x) { return x.slice(); }); return; }
+    for (var i = 0; i < rows.length && n < limit; i++) { if (!rowOk(r, rows[i])) continue; grid[r] = rows[i]; go(r + 1); }
+  }
+  go(0);
+  return { n: n, sol: sol };
+}
+function genTangoBase(rnd) {
+  var full = tCount({}, [], 1, rnd).sol, S = [];
+  full.forEach(function (row) { row.forEach(function (v) { S.push(v); }); });
+  var giv = {}, signs = [], i;
+  for (i = 0; i < 36; i++) giv[i] = S[i];
+  var edges = [];
+  for (i = 0; i < 36; i++) { if (i % 6 < 5) edges.push(i + '|' + (i + 1)); if (i < 30) edges.push(i + '|' + (i + 6)); }
+  gShuffle(edges, rnd).slice(0, 9 + Math.floor(rnd() * 4)).forEach(function (e) { var p = e.split('|'); signs.push({ a: +p[0], b: +p[1], eq: S[+p[0]] === S[+p[1]] }); });
+  /* take away the given cells first, then the signs that are not needed, as long as the solution stays unique */
+  gShuffle(Object.keys(giv), rnd).forEach(function (k) { var v = giv[k]; delete giv[k]; if (tCount(giv, signs, 2).n !== 1) giv[k] = v; });
+  gShuffle(signs.slice(), rnd).forEach(function (s) { var j = signs.indexOf(s); signs.splice(j, 1); if (tCount(giv, signs, 2).n !== 1) signs.splice(j, 0, s); });
+  return { giv: giv, signs: signs, sol: S };
+}
+/* level: 1 facile, 2 medio, 3 difficile. From the fewest clues, given cells are put back one at a time
+   until the reasoning needed is down to the level asked (and, for the easier ones, at least 6 given cells). */
+function genTango(seed, level) {
+  level = level || 2;
+  var rnd = gRng('sole|' + level + '|' + seed), best = null;
+  for (var tries = 0; tries < 80; tries++) {
+    var pz = genTangoBase(rnd), L = tSolveLevel(pz.giv, pz.signs);
+    if (L < level) continue;
+    var free = gShuffle(Object.keys(pz.sol).map(Number).filter(function (p) { return pz.giv[p] === undefined; }), rnd), f = 0;
+    while (L > level && f < free.length) { pz.giv[free[f]] = pz.sol[free[f]]; f++; L = tSolveLevel(pz.giv, pz.signs); }
+    if (L !== level || (level === 1 && Object.keys(pz.giv).length > 11)) { if (!best) best = pz; continue; }   /* a facile one with half the board given is no fun */
+    var want = level === 1 ? 7 : level === 2 ? 5 : 0;
+    while (Object.keys(pz.giv).length < want && f < free.length) { var p = free[f++]; pz.giv[p] = pz.sol[p]; if (tSolveLevel(pz.giv, pz.signs) !== level) delete pz.giv[p]; }
+    pz.level = level; pz.tries = tries + 1;
+    return pz;
+  }
+  best.level = tSolveLevel(best.giv, best.signs);
+  return best;
+}
+/* Regine at a given level: new boards until one needs exactly that reasoning */
+function genQueensLevel(N, level, seed) {
+  var best = null, bestD = 9;
+  for (var i = 0; i < 400; i++) {
+    var g = genQueens(N, seed + '#' + level + '#' + i); if (!g) continue;
+    var L = qSolveLevel(N, g.reg); if (L === level) { g.level = L; g.tries = i + 1; return g; }
+    var d = Math.abs(L - level); if (d < bestD) { bestD = d; best = g; best.level = L; }
+  }
+  return best;
+}
+/* rule breaks on a board (cells 0 = empty, 1 = sun, 2 = moon): the cells and the signs involved */
+function tErrors(cells, signs) {
+  var bad = {}, badS = {};
+  function line(idx) {
+    [1, 2].forEach(function (v) {
+      var n = 0; idx.forEach(function (p) { if (cells[p] === v) n++; });
+      if (n > 3) idx.forEach(function (p) { if (cells[p] === v) bad[p] = 1; });
+    });
+    for (var j = 2; j < 6; j++) { var a = cells[idx[j]]; if (a && a === cells[idx[j - 1]] && a === cells[idx[j - 2]]) { bad[idx[j]] = bad[idx[j - 1]] = bad[idx[j - 2]] = 1; } }
+  }
+  for (var r = 0; r < 6; r++) { var row = [], col = []; for (var c = 0; c < 6; c++) { row.push(r * 6 + c); col.push(c * 6 + r); } line(row); line(col); }
+  signs.forEach(function (s, i) { var a = cells[s.a], b = cells[s.b]; if (a && b && (a === b) !== s.eq) { badS[i] = 1; bad[s.a] = bad[s.b] = 1; } });
+  return { cells: bad, signs: badS };
+}
+/* ================= Giochi: a solver that only reasons, to measure how hard a puzzle is =================
+   level 1 (facile): direct consequences — a row, column or zone with a single place left; the cells around a queen;
+                     a zone shut in one row or column frees the rest of that row.
+   level 2 (medio): a row or column shut in one zone; a cell that would leave a row, column or zone with no room.
+   level 3 (difficile): two or three zones shut in as many rows or columns; trying a cell and seeing it leads to a dead end.
+   Returns the hardest level needed, or 4 if even level 3 is not enough. */
+function qSolveLevel(N, reg) {
+  var cand = new Array(N * N).fill(1), queen = new Array(N * N).fill(0), maxL = 0;
+  var units = [];
+  for (var i = 0; i < N; i++) { var r = [], c = [], z = []; for (var j = 0; j < N; j++) { r.push(i * N + j); c.push(j * N + i); } units.push(r, c); }
+  for (var g = 0; g < N; g++) { var zz = []; reg.forEach(function (x, p) { if (x === g) zz.push(p); }); units.push(zz); }
+  function kills(p) {   /* cells a queen on p rules out */
+    var r = (p / N) | 0, c = p % N, out = [];
+    for (var q = 0; q < N * N; q++) { if (q === p) continue; var rr = (q / N) | 0, cc = q % N; if (rr === r || cc === c || reg[q] === reg[p] || (Math.abs(rr - r) <= 1 && Math.abs(cc - c) <= 1)) out.push(q); }
+    return out;
+  }
+  var KILL = []; for (var p0 = 0; p0 < N * N; p0++) KILL[p0] = kills(p0);
+  function place(st, p) { st.queen[p] = 1; st.cand[p] = 0; KILL[p].forEach(function (q) { st.cand[q] = 0; }); }
+  function dead(st) { return units.some(function (u) { return !u.some(function (p) { return st.queen[p] || st.cand[p]; }); }); }
+  function done(st) { return st.queen.reduce(function (a, b) { return a + b; }, 0) === N; }
+  function step1(st) {
+    for (var k = 0; k < units.length; k++) {
+      var u = units[k]; if (u.some(function (p) { return st.queen[p]; })) continue;
+      var cs = u.filter(function (p) { return st.cand[p]; });
+      if (cs.length === 1) { place(st, cs[0]); return true; }
+    }
+    return false;
+  }
+  function open(st, u) { return !u.some(function (p) { return st.queen[p]; }); }
+  function confineZones(st) {   /* a zone whose places are all in one row (column): no other queen in that row (column) */
+    var ch = false;
+    units.slice(2 * N).forEach(function (a) {
+      if (!open(st, a)) return;
+      var cs = a.filter(function (p) { return st.cand[p]; }); if (!cs.length) return;
+      for (var k = 0; k < 2 * N; k++) {
+        var b = units[k]; if (!cs.every(function (p) { return b.indexOf(p) >= 0; })) continue;
+        b.forEach(function (p) { if (st.cand[p] && a.indexOf(p) < 0) { st.cand[p] = 0; ch = true; } });
+      }
+    });
+    return ch;
+  }
+  function step2(st) {
+    var ch = false;
+    /* a zone whose places are all in one row (column): no other queen in that row (column); and the other way round */
+    var rows = units.filter(function (_, k) { return k < 2 * N && k % 2 === 0; }), cols = units.filter(function (_, k) { return k < 2 * N && k % 2 === 1; }), zones = units.slice(2 * N);
+    function confine(A, B) {   /* every open unit of A whose places all fall in one unit of B */
+      A.forEach(function (a) {
+        if (!open(st, a)) return;
+        var cs = a.filter(function (p) { return st.cand[p]; }); if (!cs.length) return;
+        B.forEach(function (b) {
+          if (!cs.every(function (p) { return b.indexOf(p) >= 0; })) return;
+          b.forEach(function (p) { if (st.cand[p] && a.indexOf(p) < 0) { st.cand[p] = 0; ch = true; } });
+        });
+      });
+    }
+    confine(zones, rows); confine(zones, cols); confine(rows, zones); confine(cols, zones);
+    if (ch) return true;
+    /* a place that would leave some row, column or zone with no room at all */
+    for (var p = 0; p < N * N; p++) {
+      if (!st.cand[p]) continue;
+      var k = KILL[p];
+      for (var t = 0; t < units.length; t++) {
+        var u = units[t]; if (u.indexOf(p) >= 0 || !open(st, u)) continue;
+        if (u.every(function (q) { return !st.cand[q] || k.indexOf(q) >= 0; })) { st.cand[p] = 0; return true; }
+      }
+    }
+    return false;
+  }
+  function combos(arr, k, f) { (function go(s, acc) { if (acc.length === k) { f(acc); return; } for (var i = s; i < arr.length; i++) { acc.push(arr[i]); go(i + 1, acc); acc.pop(); } })(0, []); }
+  function step3(st) {
+    var rows = [], cols = [], zones = units.slice(2 * N);
+    for (var i = 0; i < N; i++) { rows.push(units[2 * i]); cols.push(units[2 * i + 1]); }
+    var ch = false;
+    function group(A, B) {   /* k open units of A whose places all fall inside k units of B: those B units are full */
+      var openA = A.filter(function (a) { return open(st, a); });
+      for (var k = 2; k <= 3 && !ch; k++) combos(openA, k, function (set) {
+        if (ch) return;
+        var cs = []; set.forEach(function (a) { a.forEach(function (p) { if (st.cand[p]) cs.push(p); }); });
+        var bs = B.filter(function (b) { return cs.some(function (p) { return b.indexOf(p) >= 0; }); });
+        if (bs.length !== k) return;
+        bs.forEach(function (b) { b.forEach(function (p) { if (st.cand[p] && cs.indexOf(p) < 0) { st.cand[p] = 0; ch = true; } }); });
+      });
+    }
+    group(zones, rows); if (!ch) group(zones, cols); if (!ch) group(rows, zones); if (!ch) group(cols, zones);
+    if (ch) return true;
+    /* trying a place: if the simple steps lead to a dead end, it is wrong */
+    for (var p = 0; p < N * N; p++) {
+      if (!st.cand[p]) continue;
+      var tr = { cand: st.cand.slice(), queen: st.queen.slice() };
+      place(tr, p);
+      var guard = 0;
+      while (!dead(tr) && !done(tr) && guard++ < 200 && (step1(tr) || confineZones(tr) || step2(tr))) {}
+      if (dead(tr)) { st.cand[p] = 0; return true; }
+    }
+    return false;
+  }
+  var st = { cand: cand, queen: queen };
+  for (var guard = 0; guard < 500 && !done(st); guard++) {
+    if (dead(st)) return 4;
+    if (step1(st) || confineZones(st)) { maxL = Math.max(maxL, 1); continue; }
+    if (step2(st)) { maxL = Math.max(maxL, 2); continue; }
+    if (step3(st)) { maxL = 3; continue; }
+    return 4;
+  }
+  return done(st) ? Math.max(1, maxL) : 4;
+}
+
+/* Sole e luna: level 1 — signs, two alike side by side, a gap between two alike, a line that already has three of a kind;
+   level 2 — a line seen as a whole (only some of its 14 possible fillings still fit);
+   level 3 — trying a cell and seeing it leads to a dead end. */
+function tSolveLevel(giv, signs) {
+  var V = new Array(36).fill(0), maxL = 0, lines = [];
+  Object.keys(giv).forEach(function (k) { V[k] = giv[k] + 1; });
+  for (var i = 0; i < 6; i++) { var r = [], c = []; for (var j = 0; j < 6; j++) { r.push(i * 6 + j); c.push(j * 6 + i); } lines.push(r, c); }
+  function opp(v) { return v === 1 ? 2 : 1; }
+  function set(S, p, v) { if (S[p] === v) return false; if (S[p] && S[p] !== v) { S.bad = true; return false; } S[p] = v; return true; }
+  function bad(S) {
+    if (S.bad) return true;
+    var e = tErrors(S, signs); return Object.keys(e.cells).length > 0;
+  }
+  function step1(S) {
+    var ch = false;
+    signs.forEach(function (s) { var a = S[s.a], b = S[s.b]; if (a && !b) ch = set(S, s.b, s.eq ? a : opp(a)) || ch; else if (b && !a) ch = set(S, s.a, s.eq ? b : opp(b)) || ch; });
+    lines.forEach(function (L) {
+      for (var j = 0; j < 6; j++) {
+        var a = S[L[j]];
+        if (j < 5 && a && S[L[j + 1]] === a) { if (j > 0) ch = set(S, L[j - 1], opp(a)) || ch; if (j < 4) ch = set(S, L[j + 2], opp(a)) || ch; }
+        if (j < 4 && a && S[L[j + 2]] === a) ch = set(S, L[j + 1], opp(a)) || ch;
+      }
+      [1, 2].forEach(function (v) { if (L.filter(function (p) { return S[p] === v; }).length === 3) L.forEach(function (p) { if (!S[p]) ch = set(S, p, opp(v)) || ch; }); });
+    });
+    return ch;
+  }
+  function step2(S) {
+    var ch = false;
+    lines.forEach(function (L) {
+      if (L.every(function (p) { return S[p]; })) return;
+      var fits = T_ROWS.filter(function (row) {
+        for (var j = 0; j < 6; j++) if (S[L[j]] && S[L[j]] !== row[j] + 1) return false;
+        for (var k = 0; k < signs.length; k++) { var s = signs[k], ia = L.indexOf(s.a), ib = L.indexOf(s.b); if (ia >= 0 && ib >= 0 && (row[ia] === row[ib]) !== s.eq) return false; }
+        return true;
+      });
+      if (!fits.length) { S.bad = true; return; }
+      for (var j = 0; j < 6; j++) { if (S[L[j]]) continue; var v = fits[0][j]; if (fits.every(function (f) { return f[j] === v; })) ch = set(S, L[j], v + 1) || ch; }
+    });
+    return ch;
+  }
+  function full(S) { return S.every(function (v) { return v; }); }
+  function step3(S) {
+    for (var p = 0; p < 36; p++) {
+      if (S[p]) continue;
+      for (var v = 1; v <= 2; v++) {
+        var T = S.slice(); T.bad = false; T[p] = v;
+        var g = 0; while (!bad(T) && !full(T) && g++ < 100 && (step1(T) || step2(T))) {}
+        if (bad(T)) { set(S, p, opp(v)); return true; }
+      }
+    }
+    return false;
+  }
+  for (var guard = 0; guard < 300 && !full(V); guard++) {
+    if (bad(V)) return 4;
+    if (step1(V)) { maxL = Math.max(maxL, 1); continue; }
+    if (step2(V)) { maxL = Math.max(maxL, 2); continue; }
+    if (step3(V)) { maxL = 3; continue; }
+    return 4;
+  }
+  return full(V) && !bad(V) ? Math.max(1, maxL) : 4;
+}
+
+/* ---- Percorso: one line through every cell, starting at 1 and touching the numbers in order; walls block the way ---- */
+function zNb(N, p) { var r = (p / N) | 0, c = p % N, o = []; if (r > 0) o.push(p - N); if (r < N - 1) o.push(p + N); if (c > 0) o.push(p - 1); if (c < N - 1) o.push(p + 1); return o; }
+function zWallKey(a, b) { return a < b ? a + '-' + b : b + '-' + a; }
+function zRandomPath(N, rnd) {   /* a snake, then many random "backbite" moves: a random path through every cell */
+  var path = [];
+  for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) path.push(r * N + (r % 2 ? N - 1 - c : c));
+  for (var k = 0; k < N * N * 40; k++) {
+    if (rnd() < 0.5) path.reverse();
+    var head = path[0], nb = zNb(N, head).filter(function (x) { return x !== path[1]; });
+    var x = nb[Math.floor(rnd() * nb.length)], i = path.indexOf(x);
+    path = path.slice(0, i).reverse().concat(path.slice(i));
+  }
+  return path;
+}
+/* number of solutions (stops at limit), with a work budget: over budget counts as "not sure", i.e. 2 */
+function zCount(N, nums, walls, limit, budget) {
+  var M = N * N, numAt = {}, K = 0, vis = new Array(M).fill(0), n = 0, work = 0, start = -1, endCell = -1;
+  Object.keys(nums).forEach(function (p) { numAt[p] = nums[p]; K = Math.max(K, nums[p]); if (nums[p] === 1) start = +p; });
+  Object.keys(nums).forEach(function (p) { if (nums[p] === K) endCell = +p; });
+  var NB = []; for (var p = 0; p < M; p++) NB[p] = zNb(N, p).filter(function (q) { return !walls[zWallKey(p, q)]; });
+  function ok(head) {
+    /* the cells left must stay in one piece, and no cell but the end can be a dead end */
+    var seen = {}, st = [], cnt = 0, left = 0, ones = 0;
+    for (var q = 0; q < M; q++) if (!vis[q]) {
+      left++;
+      var d = 0; NB[q].forEach(function (x) { if (!vis[x] || x === head) d++; });
+      if (q !== endCell && d < 2) { if (d === 0) return false; ones++; }
+      if (!st.length && !cnt) { st.push(q); seen[q] = 1; cnt = 1; }
+    }
+    if (ones > 1) return false;
+    while (st.length) { var x = st.pop(); NB[x].forEach(function (y) { if (!vis[y] && !seen[y]) { seen[y] = 1; cnt++; st.push(y); } }); }
+    return cnt === left;
+  }
+  function go(head, depth, next) {
+    if (n >= limit || work > budget) return;
+    work++;
+    if (depth === M) { if (head === endCell) n++; return; }
+    if (!ok(head)) return;
+    for (var i = 0; i < NB[head].length; i++) {
+      var q = NB[head][i]; if (vis[q]) continue;
+      var v = numAt[q];
+      if (v !== undefined && v !== next) continue;
+      vis[q] = 1; go(q, depth + 1, v !== undefined ? next + 1 : next); vis[q] = 0;
+    }
+  }
+  if (start < 0) return 2;
+  vis[start] = 1; go(start, 1, 2);
+  return work > budget ? 2 : n;
+}
+/* level: 1 facile (many numbers), 2 medio, 3 difficile (few numbers, a few walls) */
+function genZip(N, level, seed) {
+  var rnd = gRng('percorso|' + N + '|' + level + '|' + seed);
+  var target = level === 1 ? Math.round(N * N / 3.2) : level === 2 ? Math.round(N * N / 5) : Math.round(N * N / 8);
+  for (var tries = 0; tries < 30; tries++) {
+    var path = zRandomPath(N, rnd), M = N * N, step = level === 1 ? 2 : 3;
+    var marks = [0]; for (var i = step; i < M - 1; i += step) marks.push(i); marks.push(M - 1);
+    var walls = {}, onPath = {};
+    for (var j = 0; j + 1 < M; j++) onPath[zWallKey(path[j], path[j + 1])] = 1;
+    if (level === 3) { var all = []; for (var p = 0; p < M; p++) zNb(N, p).forEach(function (q) { if (q > p && !onPath[zWallKey(p, q)]) all.push(zWallKey(p, q)); }); gShuffle(all, rnd).slice(0, Math.round(N * 0.8)).forEach(function (w) { walls[w] = 1; }); }
+    function numsOf(ms) { var o = {}; ms.forEach(function (m, k) { o[path[m]] = k + 1; }); return o; }
+    if (zCount(N, numsOf(marks), walls, 2, 60000) !== 1) continue;
+    /* take away numbers (never the first nor the last) while the line stays the only one, down to the level's count */
+    var inner = gShuffle(marks.slice(1, -1), rnd);
+    for (var t = 0; t < inner.length && marks.length > target; t++) {
+      var trial = marks.filter(function (m) { return m !== inner[t]; });
+      if (zCount(N, numsOf(trial), walls, 2, 60000) === 1) marks = trial;
+    }
+    if (level > 1 && marks.length > target + 2) continue;
+    return { N: N, nums: numsOf(marks), walls: walls, sol: path, level: level, tries: tries + 1 };
+  }
+  return null;
+}
+
+/* ---- Mini sudoku 6×6: digits 1–6 once in every row, column and 2×3 box ---- */
+var S_UNITS = (function () {
+  var u = [], r, c;
+  for (r = 0; r < 6; r++) { var row = []; for (c = 0; c < 6; c++) row.push(r * 6 + c); u.push(row); }
+  for (c = 0; c < 6; c++) { var col = []; for (r = 0; r < 6; r++) col.push(r * 6 + c); u.push(col); }
+  for (var b = 0; b < 6; b++) { var bx = [], r0 = Math.floor(b / 2) * 2, c0 = (b % 2) * 3; for (r = 0; r < 2; r++) for (c = 0; c < 3; c++) bx.push((r0 + r) * 6 + c0 + c); u.push(bx); }
+  return u;
+})();
+var S_PEERS = (function () { var pe = []; for (var p = 0; p < 36; p++) { var s = {}; S_UNITS.forEach(function (u) { if (u.indexOf(p) >= 0) u.forEach(function (q) { if (q !== p) s[q] = 1; }); }); pe.push(Object.keys(s).map(Number)); } return pe; })();
+function sCount(grid, limit, rnd) {
+  var g = grid.slice(), n = 0, sol = null;
+  function cands(p) { var m = 126; S_PEERS[p].forEach(function (q) { if (g[q]) m &= ~(1 << g[q]); }); return m; }
+  function go() {
+    if (n >= limit) return;
+    var best = -1, bm = 0, bc = 9;
+    for (var p = 0; p < 36; p++) if (!g[p]) { var m = cands(p), c = 0; for (var v = 1; v <= 6; v++) if (m & (1 << v)) c++; if (c < bc) { bc = c; best = p; bm = m; if (!c) return; } }
+    if (best < 0) { n++; if (!sol) sol = g.slice(); return; }
+    var vs = []; for (var v2 = 1; v2 <= 6; v2++) if (bm & (1 << v2)) vs.push(v2);
+    if (rnd) gShuffle(vs, rnd);
+    for (var i = 0; i < vs.length; i++) { g[best] = vs[i]; go(); g[best] = 0; }
+  }
+  go();
+  return { n: n, sol: sol };
+}
+/* reasoning level: 1 singles; 2 a digit shut in one row/column of a box (or the other way), naked pairs; 3 trying a digit.
+   Facile = level 1 with many digits given; medio = no trial needed, but as few digits as possible; difficile = a trial is needed. */
+function sSolveLevel(grid) {
+  var g = grid.slice(), C = [], maxL = 0;
+  for (var p = 0; p < 36; p++) C[p] = g[p] ? 1 << g[p] : 126;
+  function put(p, v) { g[p] = v; C[p] = 1 << v; S_PEERS[p].forEach(function (q) { C[q] &= ~(1 << v); }); }
+  for (p = 0; p < 36; p++) if (g[p]) put(p, g[p]);
+  function bits(m) { var c = 0; for (var v = 1; v <= 6; v++) if (m & (1 << v)) c++; return c; }
+  function first(m) { for (var v = 1; v <= 6; v++) if (m & (1 << v)) return v; return 0; }
+  function bad(G, CC) { for (var q = 0; q < 36; q++) if (!G[q] && !CC[q]) return true; return false; }
+  function step1(G, CC, putf) {
+    for (var q = 0; q < 36; q++) if (!G[q] && bits(CC[q]) === 1) { putf(q, first(CC[q])); return true; }
+    for (var u = 0; u < S_UNITS.length; u++) for (var v = 1; v <= 6; v++) {
+      var U = S_UNITS[u]; if (U.some(function (x) { return G[x] === v; })) continue;
+      var ps = U.filter(function (x) { return !G[x] && (CC[x] & (1 << v)); });
+      if (ps.length === 1) { putf(ps[0], v); return true; }
+    }
+    return false;
+  }
+  function step2(G, CC) {
+    var ch = false;
+    for (var b = 12; b < 18; b++) for (var v = 1; v <= 6; v++) {
+      var ps = S_UNITS[b].filter(function (x) { return !G[x] && (CC[x] & (1 << v)); }); if (ps.length < 2) continue;
+      for (var u = 0; u < 12; u++) {
+        var U = S_UNITS[u]; if (!ps.every(function (x) { return U.indexOf(x) >= 0; })) continue;
+        U.forEach(function (x) { if (!G[x] && S_UNITS[b].indexOf(x) < 0 && (CC[x] & (1 << v))) { CC[x] &= ~(1 << v); ch = true; } });
+      }
+    }
+    for (var u2 = 0; u2 < 12; u2++) for (var v2 = 1; v2 <= 6; v2++) {
+      var ps2 = S_UNITS[u2].filter(function (x) { return !G[x] && (CC[x] & (1 << v2)); }); if (ps2.length < 2) continue;
+      for (var b2 = 12; b2 < 18; b2++) {
+        var B = S_UNITS[b2]; if (!ps2.every(function (x) { return B.indexOf(x) >= 0; })) continue;
+        B.forEach(function (x) { if (!G[x] && S_UNITS[u2].indexOf(x) < 0 && (CC[x] & (1 << v2))) { CC[x] &= ~(1 << v2); ch = true; } });
+      }
+    }
+    S_UNITS.forEach(function (U) {
+      var open = U.filter(function (x) { return !G[x] && bits(CC[x]) === 2; });
+      for (var i = 0; i < open.length; i++) for (var j = i + 1; j < open.length; j++) if (CC[open[i]] === CC[open[j]]) {
+        var m = CC[open[i]]; U.forEach(function (x) { if (!G[x] && x !== open[i] && x !== open[j] && (CC[x] & m)) { CC[x] &= ~m; ch = true; } });
+      }
+    });
+    return ch;
+  }
+  function full(G) { return G.every(function (v) { return v; }); }
+  function step3() {
+    for (var q = 0; q < 36; q++) if (!g[q]) for (var v = 1; v <= 6; v++) {
+      if (!(C[q] & (1 << v))) continue;
+      var G = g.slice(), CC = C.slice();
+      var putT = function (x, w) { G[x] = w; CC[x] = 1 << w; S_PEERS[x].forEach(function (y) { CC[y] &= ~(1 << w); }); };
+      putT(q, v);
+      var k = 0; while (!bad(G, CC) && !full(G) && k++ < 80 && (step1(G, CC, putT) || step2(G, CC))) {}
+      if (bad(G, CC)) { C[q] &= ~(1 << v); return true; }
+    }
+    return false;
+  }
+  for (var guard = 0; guard < 300 && !full(g); guard++) {
+    if (bad(g, C)) return 4;
+    if (step1(g, C, put)) { maxL = Math.max(maxL, 1); continue; }
+    if (step2(g, C)) { maxL = Math.max(maxL, 2); continue; }
+    if (step3()) { maxL = 3; continue; }
+    return 4;
+  }
+  return full(g) ? Math.max(1, maxL) : 4;
+}
+function genSudoku(level, seed) {
+  var rnd = gRng('sudoku|' + level + '|' + seed), best = null;
+  for (var tries = 0; tries < 80; tries++) {
+    var sol = sCount(new Array(36).fill(0), 1, rnd).sol, g = sol.slice();
+    gShuffle(Array.from({ length: 36 }, function (_, i) { return i; }), rnd).forEach(function (p) { var v = g[p]; g[p] = 0; if (sCount(g, 2).n !== 1) g[p] = v; });
+    var L = sSolveLevel(g);
+    /* medio: the fewest digits, as long as no trial is needed (a sudoku with few givens is already a fair step up) */
+    if (level === 2) { if (L <= 2) return { giv: g, sol: sol, level: 2, tries: tries + 1 }; continue; }
+    if (L < level) continue;
+    var holes = gShuffle(g.map(function (v, i) { return v ? -1 : i; }).filter(function (i) { return i >= 0; }), rnd), f = 0;
+    /* give back digits one at a time; one that would make it too easy is skipped */
+    for (var h = 0; h < holes.length && L > level; h++) { var q = holes[h]; g[q] = sol[q]; var L2 = sSolveLevel(g); if (L2 < level) g[q] = 0; else L = L2; }
+    f = 0; holes = holes.filter(function (x) { return !g[x]; });
+    if (L !== level) { if (!best) best = { giv: g.slice(), sol: sol, level: L }; continue; }
+    var want = level === 1 ? 16 : level === 2 ? 12 : 0;
+    while (g.filter(function (v) { return v; }).length < want && f < holes.length) { var p = holes[f++]; g[p] = sol[p]; if (sSolveLevel(g) !== level) g[p] = 0; }
+    return { giv: g, sol: sol, level: level, tries: tries + 1 };
+  }
+  return best;
+}
+
+/* ---- Gabbie: digits 1–N once in every row and column; every cage gives its result with its operation ---- */
+function kLatin(N, rnd) {
+  var g = [], i, j;
+  for (i = 0; i < N; i++) for (j = 0; j < N; j++) g.push((i + j) % N + 1);
+  for (var k = 0; k < 50; k++) {   /* shuffle rows, columns and digits: still a Latin square */
+    var a = Math.floor(rnd() * N), b = Math.floor(rnd() * N), t;
+    if (rnd() < 0.5) for (j = 0; j < N; j++) { t = g[a * N + j]; g[a * N + j] = g[b * N + j]; g[b * N + j] = t; }
+    else for (i = 0; i < N; i++) { t = g[i * N + a]; g[i * N + a] = g[i * N + b]; g[i * N + b] = t; }
+  }
+  var perm = gShuffle(Array.from({ length: N }, function (_, x) { return x + 1; }), rnd);
+  return g.map(function (v) { return perm[v - 1]; });
+}
+function kCages(N, sol, rnd, maxSize) {
+  var M = N * N, cage = new Array(M).fill(-1), cages = [], order = gShuffle(Array.from({ length: M }, function (_, i) { return i; }), rnd);
+  order.forEach(function (p) {
+    if (cage[p] >= 0) return;
+    var id = cages.length, cells = [p], want = 1 + Math.floor(rnd() * rnd() * maxSize + rnd() * 1.6);
+    want = Math.min(maxSize, Math.max(1, want)); cage[p] = id;
+    while (cells.length < want) {
+      var fr = []; cells.forEach(function (x) { zNb(N, x).forEach(function (y) { if (cage[y] < 0 && fr.indexOf(y) < 0) fr.push(y); }); });
+      if (!fr.length) break;
+      var y = fr[Math.floor(rnd() * fr.length)]; cage[y] = id; cells.push(y);
+    }
+    cages.push({ cells: cells });
+  });
+  cages.forEach(function (cg) {
+    var vs = cg.cells.map(function (x) { return sol[x]; });
+    if (vs.length === 1) { cg.op = ''; cg.t = vs[0]; return; }
+    if (vs.length === 2) {
+      var hi = Math.max(vs[0], vs[1]), lo = Math.min(vs[0], vs[1]), r = rnd();
+      if (hi % lo === 0 && r < 0.4) { cg.op = '÷'; cg.t = hi / lo; }
+      else if (r < 0.7) { cg.op = '−'; cg.t = hi - lo; }
+      else if (r < 0.85) { cg.op = '+'; cg.t = hi + lo; }
+      else { cg.op = '×'; cg.t = hi * lo; }
+      return;
+    }
+    if (rnd() < 0.4) { cg.op = '+'; cg.t = vs.reduce(function (a, b) { return a + b; }, 0); }
+    else { cg.op = '×'; cg.t = vs.reduce(function (a, b) { return a * b; }, 1); }
+  });
+  return { cage: cage, cages: cages };
+}
+function kCageOk(cg, vals, N) {   /* vals: the digits in the cage, 0 = empty. false if it can no longer work */
+  var known = vals.filter(function (v) { return v; }), empty = vals.length - known.length;
+  if (cg.op === '') return !known.length || known[0] === cg.t;
+  if (cg.op === '+') { var s = known.reduce(function (a, b) { return a + b; }, 0); return empty ? s + empty <= cg.t && s + empty * N >= cg.t : s === cg.t; }
+  if (cg.op === '×') { var m = known.reduce(function (a, b) { return a * b; }, 1); return empty ? cg.t % m === 0 : m === cg.t; }
+  if (empty) return known.length === 0 || (cg.op === '−' ? known[0] + cg.t <= N || known[0] - cg.t >= 1 : known[0] * cg.t <= N || known[0] % cg.t === 0);
+  var hi = Math.max(vals[0], vals[1]), lo = Math.min(vals[0], vals[1]);
+  return cg.op === '−' ? hi - lo === cg.t : hi === lo * cg.t;
+}
+function kCount(N, cg, limit) {
+  var M = N * N, g = new Array(M).fill(0), n = 0;
+  function okAt(p) {
+    var r = (p / N) | 0, c = p % N, v = g[p];
+    for (var j = 0; j < N; j++) { if (j !== c && g[r * N + j] === v) return false; if (j !== r && g[j * N + c] === v) return false; }
+    var cc = cg.cages[cg.cage[p]]; return kCageOk(cc, cc.cells.map(function (x) { return g[x]; }), N);
+  }
+  function go(p) {
+    if (n >= limit) return;
+    if (p === M) { n++; return; }
+    for (var v = 1; v <= N; v++) { g[p] = v; if (okAt(p)) go(p + 1); }
+    g[p] = 0;
+  }
+  go(0);
+  return n;
+}
+/* level: 1 facile 4×4, 2 medio 5×5, 3 difficile 6×6 (bigger cages as it grows) */
+function genCages(level, seed) {
+  var N = level + 3, rnd = gRng('gabbie|' + level + '|' + seed);
+  for (var tries = 0; tries < 2000; tries++) {
+    var sol = kLatin(N, rnd), cg = kCages(N, sol, rnd, level === 3 ? 4 : 3);
+    var singles = cg.cages.filter(function (c) { return !c.op; }).length;
+    if (singles > 2) continue;
+    if (kCount(N, cg, 2) !== 1) continue;
+    return { N: N, cage: cg.cage, cages: cg.cages, sol: sol, level: level, tries: tries + 1 };
+  }
+  return null;
+}
+
+/* ================= Giochi: Regine, Sole e luna, Percorso, Mini sudoku, Gabbie ================= */
+var G_ORDER = ['q', 't', 'z', 's', 'n'];
+var G_NAME = { q: 'Regine', t: 'Sole e luna', z: 'Percorso', s: 'Mini sudoku', n: 'Gabbie' };
+var G_LS = 'cifresuoni.giochi';
+var Q_COLORS = ['#F5C7A0', '#B9D3F2', '#C6E5AE', '#E3CCF2', '#F6E08F', '#F2B3B3', '#B2E2DC', '#DCCFBE', '#FFCFE2', '#C5CBF4'];
+var QUEEN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18h16l1.5-10-5 4L12 5l-4.5 7-5-4z" fill="currentColor"/><rect x="4" y="19.2" width="16" height="2.3" rx="1" fill="currentColor"/></svg>';
+var SUN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5.4" fill="#F2A516"/><g stroke="#F2A516" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"/></g></svg>';
+var MOON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.2a9 9 0 1 0 5.3 13.9A7.3 7.3 0 0 1 15.5 3.2z" fill="#4A6FE3"/></svg>';
+var G = { game: 'q', mode: 'day', size: { q: 8 }, level: 2, cur: {}, timer: null, drag: null, notes: false };
+var G_LEVEL = { 1: 'facile', 2: 'medio', 3: 'difficile' };
+try {
+  var gs0 = JSON.parse(localStorage.getItem(G_LS) || 'null');
+  if (gs0) { if (G_NAME[gs0.game]) G.game = gs0.game; if (gs0.mode === 'free' || gs0.mode === 'day') G.mode = gs0.mode; if (gs0.size && [6, 7, 8, 9].indexOf(gs0.size.q) >= 0) G.size.q = gs0.size.q; if ([1, 2, 3].indexOf(gs0.level) >= 0) G.level = gs0.level; G.saved = gs0.cur || {}; }
+} catch (e) {}
+function gSave() {
+  var cur = {};
+  Object.keys(G.cur).forEach(function (k) { var s = G.cur[k]; if (s) cur[k] = { id: s.id, cells: s.cells, notes: s.notes, acc: gElapsed(s), hints: s.hints, done: s.done, hinted: s.hinted }; });
+  try { localStorage.setItem(G_LS, JSON.stringify({ game: G.game, mode: G.mode, size: G.size, level: G.level, cur: cur })); } catch (e) {}
+}
+function gRes(game) { var r = data.g.r[game] || (data.g.r[game] = { d: {}, f: {} }); r.d = r.d || {}; r.f = r.f || {}; return r; }
+/* the puzzle of the day gets harder during the week: Monday and Tuesday facile, Wednesday and Thursday medio, Friday to Sunday difficile.
+   Sizes grow with it: Regine 7×7 → 8×8 → 9×9 at the weekend, Percorso 6×6 → 7×7, Gabbie 4×4 → 5×5 → 6×6. */
+function gDaily(game, dk) {
+  var p = dk.split('-'), wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
+  var L = wd === 1 || wd === 2 ? 1 : wd === 3 || wd === 4 ? 2 : 3;
+  return { L: L, N: gSizeFor(game, L, game === 'q' ? (wd === 1 || wd === 2 ? 7 : wd === 6 || wd === 0 ? 9 : 8) : 0) };
+}
+function gSizeFor(game, L, qN) { return game === 'q' ? qN : game === 'z' ? (L === 3 ? 7 : 6) : game === 'n' ? L + 3 : 6; }
+function gNewId(game) { return 'free|' + Math.random().toString(36).slice(2, 10) + '|' + gSizeFor(game, G.level, G.size.q) + '|' + G.level; }
+function gPuzzleId(game, mode) {
+  if (mode === 'day') return 'day2|' + dayKey(Date.now());
+  var s = G.cur[game + '|free']; if (s && !s.done) return s.id;
+  return gNewId(game);
+}
+function gMake(game, id) {
+  var p = id.split('|'), day = p[0] === 'day2', d = day ? gDaily(game, p[1]) : { N: +p[2] || gSizeFor(game, +p[3] || 2, 8), L: +p[3] || 2 }, seed = (day ? 'day' : 'free') + p[1], pz = null;
+  for (var k = 0; !pz && k < 5; k++) {
+    var sd = seed + (k ? '~' + k : '');
+    pz = game === 'q' ? genQueensLevel(d.N, d.L, sd) : game === 't' ? genTango(sd, d.L) : game === 'z' ? genZip(d.N, d.L, sd) : game === 's' ? genSudoku(d.L, sd) : genCages(d.L, sd);
+  }
+  if (pz && !pz.level) pz.level = d.L;
+  return pz;
+}
+function gCells(game, pz) { return game === 'z' ? 1 : game === 's' || game === 't' ? 36 : pz.N * pz.N; }
+function gHas(game, mode) { var s = G.cur[game + '|' + mode]; return !!s && (mode === 'free' || s.id === gPuzzleId(game, 'day')); }
+function gState(game, mode, fresh) {
+  var key = game + '|' + mode, s = G.cur[key];
+  if (s && !fresh && (mode === 'free' || s.id === gPuzzleId(game, 'day'))) return s;
+  var id = fresh ? gNewId(game) : gPuzzleId(game, mode);
+  var pz = gMake(game, id), n = game === 'z' ? pz.N * pz.N : gCells(game, pz);
+  s = { id: id, game: game, pz: pz, cells: game === 'z' ? [] : new Array(n).fill(0), notes: new Array(n).fill(0), hist: [], acc: 0, t0: null, hints: 0, done: false, hinted: {}, hl: null, msg: '', sel: -1 };
+  if (game === 't') Object.keys(pz.giv).forEach(function (k) { s.cells[k] = pz.giv[k] + 1; });
+  if (game === 's') pz.giv.forEach(function (v, p) { if (v) s.cells[p] = v; });
+  var sv = G.saved && G.saved[key];
+  if (sv && sv.id === id && Array.isArray(sv.cells) && (game === 'z' ? sv.cells.length <= n : sv.cells.length === n)) {
+    s.cells = sv.cells; if (Array.isArray(sv.notes) && sv.notes.length === n) s.notes = sv.notes;
+    s.acc = +sv.acc || 0; s.hints = +sv.hints || 0; s.done = !!sv.done; s.hinted = sv.hinted || {};
+  }
+  /* today's puzzle already solved on another device: shown as done */
+  if (mode === 'day' && !s.done) { var rd = gRes(game).d[dayKey(Date.now())]; if (rd) { s.done = true; s.acc = rd[0]; s.hints = rd[1]; s.cells = gSolvedCells(s); } }
+  G.cur[key] = s;
+  return s;
+}
+/* making a puzzle can take a moment (a facile 9×9 Regine up to a second or two on a phone): say so first */
+function gBusy(fn) {
+  document.getElementById('gBoard').className = 'gboard gwait';
+  document.getElementById('gBoard').innerHTML = '<p>Preparo il puzzle…</p>';
+  document.getElementById('gDone').hidden = true; document.getElementById('gPad').hidden = true;
+  setTimeout(fn, 30);
+}
+function gSolvedCells(s) {
+  if (s.game === 'q') { var c = new Array(s.pz.N * s.pz.N).fill(0); s.pz.sol.forEach(function (p) { c[p] = 2; }); return c; }
+  if (s.game === 't') return s.pz.sol.map(function (v) { return v + 1; });
+  return s.pz.sol.slice();
+}
+function gFixed(s, p) { return (s.game === 't' && s.pz.giv[p] !== undefined) || (s.game === 's' && !!s.pz.giv[p]); }
+function gNow() { return G.cur[G.game + '|' + G.mode]; }
+function gElapsed(s) { return s.acc + (s.t0 ? performance.now() - s.t0 : 0); }
+function gPause() { Object.keys(G.cur).forEach(function (k) { var s = G.cur[k]; if (s && s.t0) { s.acc += performance.now() - s.t0; s.t0 = null; } }); gSave(); }
+function gFmt(ms) { var t = Math.floor(ms / 1000); return Math.floor(t / 60) + ':' + pad2(t % 60); }
+function gTick() { var s = gNow(); if (s && tab === 'g') document.getElementById('gTime').textContent = gFmt(gElapsed(s)); }
+function gNumeric(game) { return game === 's' || game === 'n'; }
+
+/* ---------- drawing ---------- */
+function gameShow(fresh) {
+  els.qView.hidden = true; els.emptyState.hidden = true; els.pad.hidden = true;
+  setSegS(document.getElementById('gGameSeg'), 'data-g', G.game);
+  setSegS(document.getElementById('gModeSeg'), 'data-m', G.mode);
+  var lv = document.getElementById('gLevel'); lv.hidden = G.mode !== 'free'; setSegS(lv, 'data-l', String(G.level));
+  var sz = document.getElementById('gSize'); sz.hidden = !(G.game === 'q' && G.mode === 'free'); sz.value = String(G.size.q);
+  renderGameRules();
+  if (fresh || !gHas(G.game, G.mode)) { clearInterval(G.timer); gBusy(function () { gState(G.game, G.mode, fresh); gSave(); gameShow(); renderAll(); }); return; }
+  var s = gState(G.game, G.mode), pz = s.pz;
+  document.getElementById('gTitle').textContent = G_NAME[G.game] + (G.game !== 's' && G.game !== 't' ? ' ' + pz.N + '×' + pz.N : '') + (pz.level ? ' · ' + G_LEVEL[Math.min(3, pz.level)] : '');
+  document.getElementById('gNew').hidden = G.mode === 'day';
+  document.querySelector('.gctl').style.gridTemplateColumns = 'repeat(' + (G.mode === 'day' ? 3 : 4) + ', minmax(0, 1fr))';
+  gDraw(); gTick();
+  clearInterval(G.timer); G.timer = setInterval(gTick, 250);
+}
+function gDraw() {
+  var s = gNow(), b = document.getElementById('gBoard');
+  b.className = 'gboard g' + s.game + (s.done ? ' solved' : '');
+  ({ q: gDrawQueens, t: gDrawTango, z: gDrawZip, s: gDrawSudoku, n: gDrawCages })[s.game](s, b);
+  document.getElementById('gMsg').innerHTML = s.msg || '';
+  ['gUndo', 'gHint', 'gClear'].forEach(function (id) { document.getElementById(id).disabled = s.done; });
+  gDrawPad(s);
+  gDrawDone(s);
+}
+function qConflicts(s) {
+  var N = s.pz.N, reg = s.pz.reg, qs = [], bad = {};
+  s.cells.forEach(function (v, p) { if (v === 2) qs.push(p); });
+  for (var i = 0; i < qs.length; i++) for (var j = i + 1; j < qs.length; j++) {
+    var a = qs[i], b = qs[j], ra = (a / N) | 0, rb = (b / N) | 0, ca = a % N, cb = b % N;
+    if (ra === rb || ca === cb || reg[a] === reg[b] || (Math.abs(ra - rb) <= 1 && Math.abs(ca - cb) <= 1)) { bad[a] = bad[b] = 1; }
+  }
+  return { qs: qs, bad: bad };
+}
+function gEdges(N, p, reg) {   /* thick borders where the zone (or cage) changes */
+  var r = (p / N) | 0, c = p % N, g = reg[p];
+  return (r === 0 || reg[p - N] !== g ? ' bt' : '') + (r === N - 1 || reg[p + N] !== g ? ' bb' : '') + (c === 0 || reg[p - 1] !== g ? ' bl' : '') + (c === N - 1 || reg[p + 1] !== g ? ' br' : '');
+}
+function gDrawQueens(s, b) {
+  var N = s.pz.N, reg = s.pz.reg, cf = qConflicts(s), h = '';
+  b.style.gridTemplateColumns = 'repeat(' + N + ', minmax(0, 1fr))';
+  for (var p = 0; p < N * N; p++) {
+    var r = (p / N) | 0, c = p % N, g = reg[p], v = s.cells[p];
+    h += '<button type="button" class="gc' + gEdges(N, p, reg) + (cf.bad[p] ? ' bad' : '') + (s.hl === p ? ' hl' : '') + (s.hinted[p] ? ' hinted' : '') + '" data-p="' + p + '" style="background:' + Q_COLORS[g % Q_COLORS.length] + '" aria-label="Riga ' + (r + 1) + ', colonna ' + (c + 1) + (v === 2 ? ', regina' : v === 1 ? ', segnata' : '') + '">' + (v === 2 ? QUEEN_SVG : v === 1 ? '<i class="gx">×</i>' : '') + '</button>';
+  }
+  b.innerHTML = h;
+  var left = N - cf.qs.length;
+  document.getElementById('gCount').textContent = s.done ? '' : (left > 0 ? 'mancano ' + left : cf.qs.length > N ? 'troppe regine' : '');
+}
+function gDrawTango(s, b) {
+  var pz = s.pz, er = tErrors(s.cells, pz.signs), h = '';
+  b.style.gridTemplateColumns = 'repeat(6, minmax(0, 1fr))';
+  for (var p = 0; p < 36; p++) {
+    var v = s.cells[p], fixed = gFixed(s, p);
+    h += '<button type="button" class="gc' + (fixed ? ' fix' : '') + (er.cells[p] ? ' bad' : '') + (s.hl === p ? ' hl' : '') + (s.hinted[p] ? ' hinted' : '') + '" data-p="' + p + '"' + (fixed ? ' aria-disabled="true"' : '') +
+      ' aria-label="Riga ' + (Math.floor(p / 6) + 1) + ', colonna ' + (p % 6 + 1) + (v === 1 ? ', sole' : v === 2 ? ', luna' : ', vuota') + '">' + (v === 1 ? SUN_SVG : v === 2 ? MOON_SVG : '') + '</button>';
+  }
+  pz.signs.forEach(function (sg, i) {
+    var r = (sg.a / 6) | 0, c = sg.a % 6, hor = sg.b === sg.a + 1;
+    var x = hor ? (c + 1) / 6 * 100 : (c + 0.5) / 6 * 100, y = hor ? (r + 0.5) / 6 * 100 : (r + 1) / 6 * 100;
+    h += '<span class="gsign' + (er.signs[i] ? ' bad' : '') + '" style="left:' + x.toFixed(3) + '%;top:' + y.toFixed(3) + '%" aria-hidden="true">' + (sg.eq ? '=' : '×') + '</span>';
+  });
+  b.innerHTML = h;
+  var empty = s.cells.filter(function (v) { return !v; }).length;
+  document.getElementById('gCount').textContent = s.done ? '' : empty ? 'mancano ' + empty : '';
+}
+function gDrawZip(s, b) {
+  var pz = s.pz, N = pz.N, path = s.cells, on = {}, h = '';
+  path.forEach(function (p, i) { on[p] = i + 1; });
+  b.style.gridTemplateColumns = 'repeat(' + N + ', minmax(0, 1fr))';
+  for (var p = 0; p < N * N; p++) {
+    var r = (p / N) | 0, c = p % N, w = pz.walls, num = pz.nums[p];
+    var wc = (r > 0 && w[zWallKey(p, p - N)] ? ' wt' : '') + (r < N - 1 && w[zWallKey(p, p + N)] ? ' wb' : '') + (c > 0 && w[zWallKey(p, p - 1)] ? ' wl' : '') + (c < N - 1 && w[zWallKey(p, p + 1)] ? ' wr' : '');
+    h += '<button type="button" class="gc' + wc + (on[p] ? ' on' : '') + (path.length && path[path.length - 1] === p && !s.done ? ' head' : '') + (s.hl === p ? ' hl' : '') + '" data-p="' + p + '" aria-label="Riga ' + (r + 1) + ', colonna ' + (c + 1) + (num ? ', numero ' + num : '') + (on[p] ? ', nel percorso' : '') + '">' +
+      (num ? '<span class="znum">' + num + '</span>' : '') + '</button>';
+  }
+  if (path.length > 1) {
+    var pts = path.map(function (q) { return ((q % N) + 0.5) + ',' + (((q / N) | 0) + 0.5); }).join(' ');
+    h += '<svg class="zline" viewBox="0 0 ' + N + ' ' + N + '" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts + '"/></svg>';
+  }
+  b.innerHTML = h;
+  var left = N * N - path.length;
+  document.getElementById('gCount').textContent = s.done ? '' : path.length ? 'mancano ' + left : 'parti dall’1';
+}
+function gDigitHTML(s, p, N) {
+  var v = s.cells[p];
+  if (v) return '<span class="gd">' + v + '</span>';
+  var m = s.notes[p]; if (!m) return '';
+  var h = '<span class="gnotes n' + N + '">';
+  for (var d = 1; d <= N; d++) h += '<i>' + (m & (1 << d) ? d : '') + '</i>';
+  return h + '</span>';
+}
+function sErrors(s) {
+  var bad = {};
+  S_UNITS.forEach(function (u) { for (var i = 0; i < 6; i++) for (var j = i + 1; j < 6; j++) { var a = s.cells[u[i]]; if (a && a === s.cells[u[j]]) bad[u[i]] = bad[u[j]] = 1; } });
+  return bad;
+}
+function gSelClasses(s, p, N, box) {
+  if (s.sel < 0 || s.done) return '';
+  var r = (p / N) | 0, c = p % N, sr = (s.sel / N) | 0, sc = s.sel % N, v = s.cells[s.sel];
+  if (p === s.sel) return ' gsel';
+  var same = v && s.cells[p] === v ? ' same' : '';
+  return (r === sr || c === sc || (box && box(p) === box(s.sel)) ? ' rel' : '') + same;
+}
+function gDrawSudoku(s, b) {
+  var bad = sErrors(s), h = '', box = function (p) { return Math.floor(((p / 6) | 0) / 2) * 2 + Math.floor((p % 6) / 3); };
+  b.style.gridTemplateColumns = 'repeat(6, minmax(0, 1fr))';
+  for (var p = 0; p < 36; p++) {
+    var r = (p / 6) | 0, c = p % 6, fixed = gFixed(s, p);
+    var edge = (r === 2 || r === 4 ? ' bt' : '') + (c === 3 ? ' bl' : '');
+    h += '<button type="button" class="gc' + edge + (fixed ? ' fix' : ' user') + (bad[p] ? ' bad' : '') + gSelClasses(s, p, 6, box) + (s.hl === p ? ' hl' : '') + (s.hinted[p] ? ' hinted' : '') + '" data-p="' + p + '" aria-label="Riga ' + (r + 1) + ', colonna ' + (c + 1) + (s.cells[p] ? ', ' + s.cells[p] : ', vuota') + '">' + gDigitHTML(s, p, 6) + '</button>';
+  }
+  b.innerHTML = h;
+  var empty = s.cells.filter(function (v) { return !v; }).length;
+  document.getElementById('gCount').textContent = s.done ? '' : empty ? 'mancano ' + empty : '';
+}
+function nErrors(s) {
+  var N = s.pz.N, bad = {}, badCage = {};
+  for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) for (var k = j + 1; k < N; k++) {
+    var a = i * N + j, b = i * N + k; if (s.cells[a] && s.cells[a] === s.cells[b]) bad[a] = bad[b] = 1;
+    var c = j * N + i, d = k * N + i; if (s.cells[c] && s.cells[c] === s.cells[d]) bad[c] = bad[d] = 1;
+  }
+  s.pz.cages.forEach(function (cg, ci) {
+    var vals = cg.cells.map(function (x) { return s.cells[x]; });
+    if (vals.every(function (v) { return v; }) && !kCageOk(cg, vals, N)) badCage[ci] = 1;
+  });
+  return { cells: bad, cages: badCage };
+}
+function gDrawCages(s, b) {
+  var pz = s.pz, N = pz.N, er = nErrors(s), h = '', first = {};
+  pz.cages.forEach(function (cg, ci) { first[Math.min.apply(null, cg.cells)] = ci; });
+  b.style.gridTemplateColumns = 'repeat(' + N + ', minmax(0, 1fr))';
+  for (var p = 0; p < N * N; p++) {
+    var r = (p / N) | 0, c = p % N, ci = pz.cage[p], cg = pz.cages[ci];
+    var lab = first[p] !== undefined ? '<span class="klab' + (er.cages[ci] ? ' bad' : '') + '">' + cg.t + (cg.op || '') + '</span>' : '';
+    h += '<button type="button" class="gc user' + gEdges(N, p, pz.cage) + (er.cells[p] ? ' bad' : '') + gSelClasses(s, p, N) + (s.hl === p ? ' hl' : '') + (s.hinted[p] ? ' hinted' : '') + '" data-p="' + p + '" aria-label="Riga ' + (r + 1) + ', colonna ' + (c + 1) + ', gabbia ' + cg.t + (cg.op ? ' ' + ({ '+': 'più', '−': 'meno', '×': 'per', '÷': 'diviso' })[cg.op] : '') + (s.cells[p] ? ', ' + s.cells[p] : '') + '">' + lab + gDigitHTML(s, p, N) + '</button>';
+  }
+  b.innerHTML = h;
+  var empty = s.cells.filter(function (v) { return !v; }).length;
+  document.getElementById('gCount').textContent = s.done ? '' : empty ? 'mancano ' + empty : '';
+}
+function gDrawPad(s) {
+  var pad = document.getElementById('gPad');
+  pad.hidden = !gNumeric(s.game) || s.done;
+  if (pad.hidden) return;
+  var N = s.game === 's' ? 6 : s.pz.N, h = '';
+  for (var d = 1; d <= N; d++) h += '<button type="button" data-d="' + d + '">' + d + '</button>';
+  h += '<button type="button" data-d="0" aria-label="Cancella">⌫</button><button type="button" data-d="n" class="gnote" aria-pressed="' + (G.notes ? 'true' : 'false') + '">Note</button>';
+  pad.innerHTML = h;
+  pad.style.gridTemplateColumns = 'repeat(' + (N + 2) + ', minmax(0, 1fr))';
+}
+function gDrawDone(s) {
+  var d = document.getElementById('gDone');
+  if (!s.done) { d.hidden = true; return; }
+  var t = gFmt(s.acc), st = gStreak(s.game), today = dayKey(Date.now());
+  var other = G_ORDER.filter(function (g) { return g !== s.game && !gRes(g).d[today]; })[0];
+  d.innerHTML = '<div class="gdone-v"><strong>Risolto</strong><span class="mono">' + t + (s.hints ? ' · ' + plural(s.hints, 'aiuto', 'aiuti') : '') + '</span></div>' +
+    (G.mode === 'day' ? '<p>' + (st > 1 ? '<b>' + st + ' giorni di fila</b> con il puzzle del giorno. ' : '') + 'Domani ce n’è uno nuovo.</p>' : '<p>' + gFreeLine(s) + '</p>') +
+    '<div class="bk-row"><button type="button" class="btn small primary" id="gMore">' + (G.mode === 'day' ? 'Giocane un altro' : 'Un altro') + '</button>' +
+    (G.mode === 'day' && other ? '<button type="button" class="btn small ghost" id="gOther" data-g="' + other + '">Prova ' + G_NAME[other] + '</button>' : '') + '</div>';
+  d.hidden = false;
+  document.getElementById('gMore').addEventListener('click', function () { G.mode = 'free'; var f = G.cur[G.game + '|free']; gSave(); gameShow(!f || f.done); renderAll(); });
+  var o = document.getElementById('gOther'); if (o) o.addEventListener('click', function () { G.game = o.getAttribute('data-g'); gSave(); gameShow(); renderAll(); });
+}
+function gKey(s) { return (s.pz.N || 6) + '|' + (s.pz.level || 2); }
+function gFreeLine(s) {
+  var f = gRes(s.game).f[gKey(s)];
+  if (!f) return '';
+  return 'Ne hai risolti ' + f[0] + (s.game !== 's' && s.game !== 't' ? ' da ' + s.pz.N + '×' + s.pz.N : '') + ' di livello ' + G_LEVEL[Math.min(3, s.pz.level || 2)] + (f[1] ? '; il tuo record senza aiuti è ' + gFmt(f[1]) + '.' : '.');
+}
+
+/* ---------- moves: every change is one step for Annulla ---------- */
+function gSet(s, changes, notes, path) {
+  var undo = { c: [], n: [] };
+  (changes || []).forEach(function (ch) { if (s.cells[ch[0]] !== ch[1]) { undo.c.push([ch[0], s.cells[ch[0]]]); s.cells[ch[0]] = ch[1]; } });
+  (notes || []).forEach(function (ch) { if (s.notes[ch[0]] !== ch[1]) { undo.n.push([ch[0], s.notes[ch[0]]]); s.notes[ch[0]] = ch[1]; } });
+  if (path) { if (path.join() === s.cells.join()) path = null; else { undo.path = s.cells; s.cells = path; } }
+  if (!undo.c.length && !undo.n.length && !path) { gDraw(); return; }
+  s.hist.push(undo);
+  if (!s.t0 && !s.done) s.t0 = performance.now();
+  s.hl = null; s.msg = '';
+  gCheckWin(s);
+  gDraw(); gSave();
+}
+function gWin(s) {
+  if (s.game === 'q') { var cf = qConflicts(s); return cf.qs.length === s.pz.N && !Object.keys(cf.bad).length; }
+  if (s.game === 't') { var er = tErrors(s.cells, s.pz.signs); return s.cells.every(function (v) { return v; }) && !Object.keys(er.cells).length; }
+  if (s.game === 'z') { var N = s.pz.N, last = s.cells[s.cells.length - 1], K = 0; Object.keys(s.pz.nums).forEach(function (p) { K = Math.max(K, s.pz.nums[p]); }); return s.cells.length === N * N && s.pz.nums[last] === K; }
+  return s.cells.every(function (v, p) { return v === s.pz.sol[p]; });
+}
+function gCheckWin(s) {
+  if (!gWin(s)) return;
+  s.acc = gElapsed(s); s.t0 = null; s.done = true; s.sel = -1;
+  var r = gRes(s.game), ms = Math.round(s.acc);
+  if (s.id.indexOf('day') === 0) { var dk = s.id.split('|')[1]; if (!r.d[dk]) r.d[dk] = [ms, s.hints, s.pz.N || 6, s.pz.level || 0]; }
+  else { var f = r.f[gKey(s)] || (r.f[gKey(s)] = [0, 0, 0]); f[0]++; f[2] += ms; if (!s.hints && (!f[1] || ms < f[1])) f[1] = ms; }
+  record('g', 'g' + s.game, true, ms);
+  Store.mark('g'); Store.mark('m');
+  renderAll();
+}
+/* Percorso: the next step is allowed if it touches the head, does not cross a wall, and a number comes only in its turn */
+function zNext(s, path) { var n = 1; path.forEach(function (p) { if (s.pz.nums[p]) n = Math.max(n, s.pz.nums[p] + 1); }); return n; }
+function zCan(s, path, q) {
+  var N = s.pz.N, h = path[path.length - 1];
+  if (path.indexOf(q) >= 0 || zNb(N, h).indexOf(q) < 0 || s.pz.walls[zWallKey(h, q)]) return false;
+  var num = s.pz.nums[q]; return !num || num === zNext(s, path);
+}
+var gBoardEl = document.getElementById('gBoard');
+function gCellAt(x, y) { var el = document.elementFromPoint(x, y); el = el && el.closest ? el.closest('#gBoard .gc') : null; return el ? +el.getAttribute('data-p') : -1; }
+gBoardEl.addEventListener('pointerdown', function (ev) {
+  var s = gNow(); if (!s || s.done || (ev.button && ev.pointerType === 'mouse')) return;
+  var p = gCellAt(ev.clientX, ev.clientY); if (p < 0) return;
+  ev.preventDefault();
+  try { gBoardEl.setPointerCapture(ev.pointerId); } catch (e) {}
+  G.drag = { start: p, last: p, moved: false, marks: [] };
+  if (s.game === 'z') {   /* Percorso: start from the 1, continue from the end, or go back to any cell of the line */
+    var path = s.cells.slice(), i = path.indexOf(p);
+    if (i >= 0) path = path.slice(0, i + 1);
+    else if (!path.length) { if (s.pz.nums[p] !== 1) { s.msg = 'Il percorso parte dall’<b>1</b>.'; gDraw(); G.drag = null; return; } path = [p]; }
+    else if (zCan(s, path, p)) path.push(p);
+    else { G.drag = null; return; }
+    G.drag.path = path; G.drag.orig = s.cells; s.cells = path; s.msg = ''; gDraw();
+  }
+});
+gBoardEl.addEventListener('pointermove', function (ev) {
+  var d = G.drag, s = gNow(); if (!d || !s) return;
+  var p = gCellAt(ev.clientX, ev.clientY); if (p < 0 || p === d.last) return;
+  if (s.game === 'z') {
+    var path = d.path;
+    if (path.length > 1 && path[path.length - 2] === p) path.pop();   /* going back over the line rubs it out */
+    else if (zCan(s, path, p)) path.push(p);
+    else return;
+    d.last = p; s.cells = path; gDraw(); return;
+  }
+  if (s.game !== 'q') return;
+  /* Regine: dragging from an empty cell marks × on the empty cells it crosses; from a × it takes the × away. Queens are never touched. */
+  if (!d.moved) { d.moved = true; d.from = s.cells[d.start] === 1 ? 1 : 0; d.to = d.from === 1 ? 0 : 1; if (s.cells[d.start] === d.from) d.marks.push(d.start); }
+  d.last = p; if (s.cells[p] === d.from && d.marks.indexOf(p) < 0) d.marks.push(p);
+  d.marks.forEach(function (q) { var el = gBoardEl.querySelector('[data-p="' + q + '"]'); if (el) el.innerHTML = d.to ? '<i class="gx">×</i>' : ''; });
+});
+function gEndDrag() {
+  var d = G.drag, s = gNow(); G.drag = null; if (!d || !s || s.done) return;
+  if (s.game === 'z') { var np = d.path; s.cells = d.orig; gSet(s, null, null, np); return; }
+  if (gNumeric(s.game)) { s.sel = d.start; gDraw(); return; }
+  if (d.moved) { gSet(s, d.marks.map(function (q) { return [q, d.to]; })); if (!d.marks.length) gDraw(); return; }
+  var p = d.start;
+  if (gFixed(s, p)) return;
+  gSet(s, [[p, (s.cells[p] + 1) % 3]]);   /* Regine: vuota → × → regina; Sole e luna: vuota → sole → luna */
+}
+gBoardEl.addEventListener('pointerup', gEndDrag);
+gBoardEl.addEventListener('pointercancel', function () { var d = G.drag, s = gNow(); G.drag = null; if (d && s && s.game === 'z') s.cells = d.orig; if (s) gDraw(); });
+gBoardEl.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+/* digits for Mini sudoku and Gabbie: on the selected cell, or as small notes */
+function gDigit(s, d) {
+  if (!s || s.done || !gNumeric(s.game)) return;
+  if (s.sel < 0) { s.msg = 'Tocca prima una casella.'; gDraw(); return; }
+  var p = s.sel; if (gFixed(s, p)) return;
+  var N = s.game === 's' ? 6 : s.pz.N;
+  if (d === 0) { gSet(s, [[p, 0]], [[p, 0]]); return; }
+  if (G.notes && !s.cells[p]) { gSet(s, null, [[p, s.notes[p] ^ (1 << d)]]); return; }
+  /* a digit placed takes itself out of the notes of its row, column (and box) */
+  var notes = [[p, 0]], r = (p / N) | 0, c = p % N;
+  for (var q = 0; q < N * N; q++) {
+    if (q === p || !(s.notes[q] & (1 << d))) continue;
+    var rq = (q / N) | 0, cq = q % N, sameBox = s.game === 's' && Math.floor(rq / 2) === Math.floor(r / 2) && Math.floor(cq / 3) === Math.floor(c / 3);
+    if (rq === r || cq === c || sameBox) notes.push([q, s.notes[q] & ~(1 << d)]);
+  }
+  gSet(s, [[p, s.cells[p] === d ? 0 : d]], notes);
+}
+document.getElementById('gPad').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'); if (!b) return;
+  var d = b.getAttribute('data-d'), s = gNow();
+  if (d === 'n') { G.notes = !G.notes; gDraw(); return; }
+  gDigit(s, +d);
+});
+document.addEventListener('keydown', function (ev) {
+  if (tab !== 'g' || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  var s = gNow(); if (!s || s.done || !gNumeric(s.game)) return;
+  var ae = document.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT' || ae.tagName === 'TEXTAREA')) return;
+  var N = s.game === 's' ? 6 : s.pz.N, k = ev.key;
+  if (/^[1-9]$/.test(k) && +k <= N) { ev.preventDefault(); gDigit(s, +k); return; }
+  if (k === 'Backspace' || k === 'Delete' || k === '0') { ev.preventDefault(); gDigit(s, 0); return; }
+  if (k === 'n' || k === 'N') { G.notes = !G.notes; gDraw(); return; }
+  var mv = { ArrowUp: -N, ArrowDown: N, ArrowLeft: -1, ArrowRight: 1 }[k];
+  if (mv) { ev.preventDefault(); var p = s.sel < 0 ? 0 : s.sel + mv; if (p >= 0 && p < N * N && !(Math.abs(mv) === 1 && ((p / N) | 0) !== ((s.sel / N) | 0))) { s.sel = p; gDraw(); } }
+});
+gBoardEl.addEventListener('keydown', function (ev) {   /* keyboard on the tap games: Invio or spazio on a cell does the same as a tap */
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  var el = ev.target.closest('.gc'), s = gNow(); if (!el || !s || s.done || s.game === 'z' || gNumeric(s.game)) return;
+  ev.preventDefault();
+  var p = +el.getAttribute('data-p'); if (gFixed(s, p)) return;
+  gSet(s, [[p, (s.cells[p] + 1) % 3]]);
+  var nx = gBoardEl.querySelector('[data-p="' + p + '"]'); if (nx) nx.focus();
+});
+document.getElementById('gUndo').addEventListener('click', function () {
+  var s = gNow(); if (!s || s.done || !s.hist.length) return;
+  var u = s.hist.pop();
+  if (u.path) s.cells = u.path;
+  (u.c || []).forEach(function (ch) { s.cells[ch[0]] = ch[1]; });
+  (u.n || []).forEach(function (ch) { s.notes[ch[0]] = ch[1]; });
+  s.hl = null; s.msg = ''; gDraw(); gSave();
+});
+document.getElementById('gClear').addEventListener('click', function () {
+  var s = gNow(); if (!s || s.done) return;
+  if (s.game === 'z') { gSet(s, null, null, []); return; }
+  var ch = [], nt = [];
+  s.cells.forEach(function (v, p) { if (v && !gFixed(s, p)) ch.push([p, 0]); });
+  s.notes.forEach(function (m, p) { if (m) nt.push([p, 0]); });
+  gSet(s, ch, nt);
+});
+/* Aiuto: first a mistake, if there is one; otherwise one correct move. Every aiuto is counted. */
+document.getElementById('gHint').addEventListener('click', function () {
+  var s = gNow(); if (!s || s.done) return;
+  if (!s.t0) s.t0 = performance.now();
+  s.hints++;
+  var sol = gSolvedCells(s), p;
+  if (s.game === 'z') {   /* keep the right start of the line, then one more correct step */
+    var k = 0; while (k < s.cells.length && s.cells[k] === sol[k]) k++;
+    var wrongTail = k < s.cells.length, np = sol.slice(0, Math.max(1, k) + 1);
+    gSet(s, null, null, np);
+    s.hl = np[np.length - 1]; s.hinted[s.hl] = 1;
+    s.msg = wrongTail ? 'Da qui il percorso andava altrove: ho tolto la parte sbagliata e aggiunto il passo giusto.' : 'Ecco il passo successivo.';
+    gDraw(); gSave(); return;
+  }
+  var wrong = -1;
+  for (p = 0; p < sol.length; p++) {
+    var v = s.cells[p];
+    if (s.game === 'q' ? (v === 2 && sol[p] !== 2) || (v === 1 && sol[p] === 2) : v && v !== sol[p]) { wrong = p; break; }
+  }
+  if (wrong >= 0) {
+    s.hl = wrong;
+    s.msg = s.game === 'q' ? (s.cells[wrong] === 2 ? 'La regina evidenziata è nel posto sbagliato.' : 'Nella casella evidenziata con la × ci va una regina.') : 'La casella evidenziata è sbagliata.';
+    gDraw(); gSave(); return;
+  }
+  var cand = [];
+  for (p = 0; p < sol.length; p++) if (s.game === 'q' ? sol[p] === 2 && s.cells[p] !== 2 : !s.cells[p]) cand.push(p);
+  if (s.game === 'q') {   /* the queen of the smallest zone still empty: the one easiest to see */
+    var sz = {}; s.pz.reg.forEach(function (g) { sz[g] = (sz[g] || 0) + 1; });
+    cand.sort(function (a, b) { return sz[s.pz.reg[a]] - sz[s.pz.reg[b]]; });
+  }
+  var q = s.game === 'q' ? cand[0] : pick(cand);
+  if (q === undefined) return;
+  s.hinted[q] = 1;
+  gSet(s, [[q, sol[q]]], gNumeric(s.game) ? [[q, 0]] : null);
+  s.hl = q; s.sel = gNumeric(s.game) ? q : s.sel; s.msg = s.game === 'q' ? 'Ecco una regina al posto giusto.' : 'Ecco una casella giusta.';
+  gDraw(); gSave();
+});
+document.getElementById('gNew').addEventListener('click', function () { gPause(); gameShow(true); });
+document.getElementById('gLevel').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'); if (!b) return;
+  gPause(); G.level = +b.getAttribute('data-l'); var s = G.cur[G.game + '|free'];
+  gSave(); gameShow(!s || s.done || (s.pz.level || 2) !== G.level || !s.hist.length);
+});
+document.getElementById('gGameSeg').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button'); if (!b) return; gPause(); G.game = b.getAttribute('data-g');
+  /* in Altri, a finished puzzle or an untouched one of another level makes way for a new one at the chosen level */
+  var s = G.cur[G.game + '|free'], fresh = G.mode === 'free' && !!s && (s.done || ((s.pz.level || 2) !== G.level && !s.hist.length));
+  gSave(); gameShow(fresh); renderAll();
+});
+document.getElementById('gModeSeg').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; gPause(); G.mode = b.getAttribute('data-m'); gSave(); gameShow(); renderAll(); });
+document.getElementById('gSize').addEventListener('change', function () {
+  gPause(); G.size.q = +this.value;
+  var s = G.cur['q|free'];
+  gSave(); gameShow(!s || s.done || s.pz.N !== G.size.q);
+});
+
+/* ---------- side: rules and results ---------- */
+var G_RULES = {
+  q: '<p>Metti una <b>regina</b> in ogni riga, in ogni colonna e in ogni zona colorata. Due regine non possono toccarsi, neanche in diagonale.</p><p>Tocca una casella una volta per segnare una <b>×</b> (lì non ci va), due volte per la regina, tre per svuotarla. Trascinando il dito partendo da una casella vuota segni tante × di fila; partendo da una × le togli.</p><p class="note">Le regine in conflitto diventano rosse.</p>',
+  t: '<p>Riempi la griglia di <b>soli</b> e <b>lune</b>: in ogni riga e in ogni colonna tre soli e tre lune, e mai tre uguali di fila.</p><p><b>=</b> tra due caselle: sono uguali. <b>×</b>: sono diverse.</p><p>Tocca una casella una volta per il sole, due per la luna, tre per svuotarla. Le caselle grigie sono date e non si cambiano.</p><p class="note">Le caselle che rompono una regola diventano rosse.</p>',
+  z: '<p>Disegna <b>una sola linea</b> che passa per tutte le caselle: parte dall’<b>1</b>, tocca i numeri in ordine e finisce sull’ultimo. Non può attraversare i muri (le righe spesse).</p><p>Trascina il dito dall’1. Per tornare indietro ripassa sulla linea; toccando una casella della linea riparti da lì.</p>',
+  s: '<p>Metti le cifre da <b>1 a 6</b>: una volta sola in ogni riga, in ogni colonna e in ogni riquadro 2×3.</p><p>Tocca una casella e poi la cifra. Con <b>Note</b> acceso le cifre diventano promemoria piccoli; quando metti una cifra, sparisce dalle note della sua riga, colonna e riquadro. Si usa anche la tastiera.</p><p class="note">Le cifre ripetute diventano rosse.</p>',
+  n: '<p>Metti le cifre da <b>1</b> alla grandezza della griglia, una volta sola in ogni riga e colonna. Ogni <b>gabbia</b> (bordo spesso) dà il risultato in alto a sinistra con la sua operazione: 7+ è la somma, 12× il prodotto, 2− la differenza tra la più grande e la più piccola, 3÷ il rapporto. Un numero senza segno è la cifra stessa.</p><p>Tocca una casella e poi la cifra; con <b>Note</b> acceso metti promemoria piccoli.</p><p class="note">Le cifre ripetute e le gabbie piene che non tornano diventano rosse.</p>'
+};
+var G_LEVELS_TXT = '<p class="note"><b>Difficoltà.</b> Ogni puzzle lo risolve prima l’app, per misurare quanto è difficile: <b>facile</b> se bastano le conseguenze dirette, <b>medio</b> se serve guardare una riga o una zona tutta insieme (o, nel Mini sudoku, se ci sono pochi numeri dati), <b>difficile</b> se serve provare una casella e scoprire che porta a un vicolo cieco. Nel Percorso decide quanti numeri vedi (e i muri nel difficile), nelle Gabbie la grandezza: 4×4, 5×5, 6×6.' +
+  ' Quello del giorno cresce durante la settimana: lunedì e martedì facile, mercoledì e giovedì medio, da venerdì a domenica difficile. Negli “Altri” scegli tu.</p>';
+function renderGameRules() { document.getElementById('gRulesH').textContent = 'Come si gioca a ' + G_NAME[G.game]; document.getElementById('gRules').innerHTML = G_RULES[G.game] + G_LEVELS_TXT; }
+function gStreak(game) {
+  var d = gRes(game).d, now = Date.now(), n = 0;
+  for (var j = d[dayKey(now)] ? 0 : 1; j < 400; j++) { if (d[dayKey(now - j * 86400000)]) n++; else break; }
+  return n;
+}
+function renderGameSide() {
+  renderGameRules();
+  var h = '';
+  G_ORDER.forEach(function (game) {
+    var r = gRes(game), days = Object.keys(r.d).sort(), dots = '', now = Date.now(), best = 0, sum = 0, nClean = 0;
+    for (var i = 13; i >= 0; i--) { var x = r.d[dayKey(now - i * 86400000)]; dots += '<i class="' + (x ? (x[1] ? 'h' : 'f') : '') + '" title="' + (x ? gFmt(x[0]) : '') + '"></i>'; }
+    days.forEach(function (k) { var x = r.d[k]; if (!x[1]) { nClean++; sum += x[0]; if (!best || x[0] < best) best = x[0]; } });
+    var st = gStreak(game), today = r.d[dayKey(now)];
+    h += '<h3>' + G_NAME[game] + '</h3><div class="gstat"><span class="sdots">' + dots + '</span><span>' + (today ? 'Oggi ' + gFmt(today[0]) + (today[1] ? ' con aiuti' : '') : 'Oggi da fare') + (st > 1 ? ' · <b>' + st + '</b> giorni di fila' : '') + '</span></div>';
+    if (days.length) h += '<p class="note" style="margin:4px 0 0">Del giorno: ' + plural(days.length, 'risolto', 'risolti') + (nClean ? ', record senza aiuti <b>' + gFmt(best) + '</b>, media ' + gFmt(sum / nClean) : '') + '.</p>';
+    var fk = Object.keys(r.f).sort();
+    if (fk.length) h += '<p class="note" style="margin:4px 0 0">Altri: ' + fk.map(function (k) { var f = r.f[k], q = k.split('|'); return (game !== 's' && game !== 't' ? q[0] + '×' + q[0] + ' ' : '') + (q[1] ? G_LEVEL[q[1]] + ' ' : '') + f[0] + (f[1] ? ' (record ' + gFmt(f[1]) + ')' : ''); }).join(' · ') + '.</p>';
+  });
+  document.getElementById('gStats').innerHTML = h + '<p class="note" style="margin:10px 0 0">Verde: risolto senza aiuti · giallo: con aiuti.</p>';
+}
+(function () {
+  var el = document.getElementById('gReset');
+  function idle() { el.innerHTML = '<button type="button" class="link">Azzera i risultati dei giochi</button>'; el.firstChild.addEventListener('click', ask); }
+  function ask() {
+    el.innerHTML = '<span>Cancellare tutti i risultati dei giochi?</span><button type="button" class="btn small primary">Azzera</button><button type="button" class="btn small ghost">Annulla</button>';
+    el.children[1].addEventListener('click', function () { data.g.r = {}; Object.keys(data.m.st.days).forEach(function (d) { delete data.m.st.days[d].g; }); G_ORDER.forEach(function (g) { delete data.m.st.kinds['g' + g]; }); Store.mark('g'); Store.mark('m'); idle(); renderAll(); });
+    el.children[2].addEventListener('click', idle);
+  }
+  idle();
+})();
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') gPause(); });
+window.addEventListener('pagehide', gPause);
+
 
 /* ---------- boot ---------- */
 Store.loadLocal();
