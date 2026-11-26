@@ -1633,8 +1633,8 @@ function packZ(z) { return [z.s, z.n, z.f, Math.round(z.b), Math.round(z.t), Mat
 function unpackZ(a) { return { s: +a[0] || 0, n: +a[1] || 0, f: +a[2] || 0, b: +a[3] || 0, t: +a[4] || 0, d: +a[5] || 0, h: +a[6] || 0, lv: +a[7] || 0, due: +a[8] || 0 }; }
 var settings = data.m.s;
 
-/* a practice choice: 'all', or one or more parts joined by commas: sq, d1, d2, d3, t:N (for example 'd1,d2,d3' or 't:17,t:19') */
-var FOCUS_GROUPS = ['sq', 'd1', 'd2', 'd3'];
+/* a practice choice: 'all', or one or more parts joined by commas: sq, d1, d2, d3, ad (adjacent numbers, n × (n + 1)), t:N (for example 'd1,d2,d3' or 't:17,t:19') */
+var FOCUS_GROUPS = ['sq', 'd1', 'd2', 'd3', 'ad'];
 function focusParts(f) { return !f || f === 'all' ? [] : String(f).split(','); }
 function validPart(x) { var m = /^t:(\d+)$/.exec(x); return FOCUS_GROUPS.indexOf(x) >= 0 || (!!m && +m[1] >= 1 && +m[1] <= 20); }
 function validFocus(f) { if (f === 'all') return true; var ps = focusParts(f); return ps.length > 0 && ps.every(validPart); }
@@ -1775,8 +1775,9 @@ var Store = {
 /* ================= decks ================= */
 function phonOpt() { return { sc0: !!settings.p.sc0 }; }
 function activeNums() { var out = []; for (var n = 1; n <= 20; n++) if (settings.a.nums[n]) out.push(n); return out; }
-/* the pairs (a, b) of a practice choice: everything, one table, the squares, or the products at distance 1, 2, 3 from a square
-   ((m − d)(m + d) = m² − d², around the squares from 10² up). Both numbers must be among the active ones, except the table chosen. */
+/* the pairs (a, b) of a practice choice: everything, one table, the squares, the products at distance 1, 2, 3 from a square
+   ((m − d)(m + d) = m² − d², around the squares from 10² up) or the adjacent numbers. 'Everything' uses only the active numbers,
+   a table chosen goes with the active numbers; the squares, the distances and the adjacent numbers are always whole, whatever numbers are active. */
 function focusPairs(f) {
   var ps = focusParts(f);
   if (ps.length > 1) {   /* several parts: the union, without repeats */
@@ -1794,9 +1795,11 @@ function focusPairs(f) {
     others.forEach(function (b) { if (b !== N) both(N, b); });
     return out;
   }
-  if (f === 'sq') { nums.forEach(function (n) { out.push([n, n]); }); return out; }
+  if (f === 'sq') { for (var n = 1; n <= 20; n++) out.push([n, n]); return out; }
+  /* adjacent numbers, the near squares n × (n + 1) = n² + n: from 10 × 11 to 19 × 20 */
+  if (f === 'ad') { for (var a = 10; a < 20; a++) both(a, a + 1); return out; }
   var d = +f.slice(1);
-  for (var m = 10; m + d <= 20; m++) if (on[m - d] && on[m + d]) both(m - d, m + d);
+  for (var m = 10; m + d <= 20; m++) both(m - d, m + d);
   return out;
 }
 function focusLabel(f) {
@@ -1804,11 +1807,13 @@ function focusLabel(f) {
   if (ps.length > 1) {
     var tabs = focusTables(f), gs = ps.filter(function (x) { return x.indexOf('t:') !== 0; }), ds = gs.filter(function (x) { return x[0] === 'd'; }), bits = [];
     if (gs.indexOf('sq') >= 0) bits.push('quadrati');
+    if (gs.indexOf('ad') >= 0) bits.push('adiacenti');
     if (ds.length) bits.push((ds.length > 1 ? 'distanze ' : 'distanza ') + ds.map(function (x) { return x[1]; }).join(', ').replace(/, (\d)$/, ' e $1'));
     if (tabs.length) bits.push((tabs.length > 1 ? 'tabelline del ' : 'tabellina del ') + tabs.join(', ').replace(/, (\d+)$/, ' e $1'));
     return bits.join(' + ');
   }
   if (f === 'sq') return 'solo i quadrati';
+  if (f === 'ad') return 'i numeri adiacenti (n × (n + 1))';
   if (f === 'd1' || f === 'd2' || f === 'd3') return 'distanza ' + f[1] + ' da un quadrato';
   if (f && f.indexOf('t:') === 0) return 'la tabellina del ' + f.slice(2);
   return 'tutte le tabelline';
@@ -2758,7 +2763,7 @@ function renderFocusBar() {
   else { keys.forEach(function (k) { var o = STATE.a.get(k); if (o && o.s === -1) n++; }); els.focusNote.textContent = plural(keys.length, 'esercizio', 'esercizi') + ', ' + n + ' imparati'; }
 }
 function buildFocusOptions() {
-  document.getElementById('fGroups').innerHTML = [['sq', 'Quadrati', '15 × 15'], ['d1', 'Distanza 1', '14 × 16 = 15² − 1'], ['d2', 'Distanza 2', '13 × 17 = 15² − 4'], ['d3', 'Distanza 3', '12 × 18 = 15² − 9']]
+  document.getElementById('fGroups').innerHTML = [['sq', 'Quadrati', '15 × 15'], ['d1', 'Distanza 1', '14 × 16 = 15² − 1'], ['d2', 'Distanza 2', '13 × 17 = 15² − 4'], ['d3', 'Distanza 3', '12 × 18 = 15² − 9'], ['ad', 'Adiacenti', '14 × 15 = 14² + 14']]
     .map(function (g) { return '<button type="button" data-f="' + g[0] + '" aria-pressed="false"><b>' + g[1] + '</b><small>' + g[2] + '</small></button>'; }).join('');
   var h = ''; for (var n = 1; n <= 20; n++) h += '<button type="button" data-f="t:' + n + '" aria-pressed="false" aria-label="Tabellina del ' + n + '">' + n + '</button>';
   document.getElementById('fTables').innerHTML = h;
